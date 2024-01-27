@@ -39,14 +39,14 @@ st.markdown("""
             visibility: hidden;
         }
 
-        .stHeadingContainer {text-align: center !important;}
+        .stHeadingContainer {text-align: center !important}
         
         [data-testid="InputInstructions"] { display: None; } 
     </style>
 
 """, unsafe_allow_html=True)
 
-st.title("سایت تخمین قیمت با استفاده از یادگیری ماشین")
+# st.title("سایت تخمین قیمت با استفاده از یادگیری ماشین")
 
 
 def do_home():
@@ -71,7 +71,7 @@ menu = {
         'تخمین قیمت خانهUS': {'action': do_estimation_us, 'item_icon': 'house-fill', 'submenu': None},
         'تخمین قیمت خانهIR': {'action': do_estimation_iran, 'item_icon': 'house-door-fill', 'submenu': None},
         'درباره ما': {'action': do_about_us, 'item_icon': 'info-circle-fill', 'submenu': None},
-    },
+    },  
     'menu_icon': 'bi bi-cash-coin',
     'default_index': 0,
     'with_view_panel': 'main',
