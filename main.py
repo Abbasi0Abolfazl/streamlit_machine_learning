@@ -108,23 +108,33 @@ def do_home():
 
 
 
-def do_laptop():    
+def load_data():
     bad_data = pd.read_csv(r"CSV_data\bad_data.csv", encoding='latin1')
     clean_data = pd.read_csv(r"CSV_data\clean_data.csv", encoding='latin1')
-    
+    return bad_data, clean_data
+
+def do_laptop():
+    bad_data, clean_data = load_data()
+
     st.markdown("<h3 style='color:red;direction: rtl;'>نمونه داده ناسالم(نامناسب برای یادگیری ماشین)</h3>", unsafe_allow_html=True)
     st.write(bad_data.head())
-    
-    if bad_data_col.button("نمایش نمودار"):
-        bad_data_col.header("Bad Data Visualization")
-        column_name_bad = bad_data_col.selectbox("ستون را مشخص کنید", list(bad_data.columns))
+
+    show_chart = st.checkbox("نمایش نمودار")
+
+    if show_chart:
+        st.header("Bad Data Visualization")
+        column_name_bad = st.selectbox("ستون را مشخص کنید", list(bad_data.columns))
         
         fig_bad, ax_bad = plt.subplots()
         sns.countplot(x=column_name_bad, data=bad_data, ax=ax_bad)
-        if bad_data_col.button("Toggle Plot Size"):
-            bad_data_col.pyplot(fig_bad)
-        else:
-            st.pyplot(fig_bad)
+        
+        size_option = st.radio("انتخاب اندازه نمودار", ["کوچک", "متوسط", "بزرگ"])
+        size_mapping = {"کوچک": (3, 1), "متوسط": (10, 8), "بزرگ": (12, 10)}
+        fig_bad.set_size_inches(size_mapping[size_option])
+
+        st.pyplot(fig_bad)
+
+
 
     st.markdown("<h3 style='color:green;direction: rtl;'>فایل مورد استفاده صحیح برای Train (تمرین دادن)  ماشین که این فایل پردازش و اصلاح شده</h3>", unsafe_allow_html=True)
     st.write(clean_data.head())
@@ -134,16 +144,16 @@ def do_laptop():
 
     
 
-    if clean_data_col.button("Clean Data"):
-        clean_data_col.header("Clean Data Visualization")
-        column_name_clean = clean_data_col.selectbox("ستون را مشخص کنید", list(clean_data.columns))
+    # if clean_data_col.button("Clean Data"):
+    #     clean_data_col.header("Clean Data Visualization")
+    #     column_name_clean = clean_data_col.selectbox("ستون را مشخص کنید", list(clean_data.columns))
         
-        fig_clean, ax_clean = plt.subplots()
-        sns.countplot(x=column_name_clean, data=clean_data, ax=ax_clean)
-        if clean_data_col.button("Toggle Plot Size"):
-            clean_data_col.pyplot(fig_clean)
-        else:
-            st.pyplot(fig_clean)
+    #     fig_clean, ax_clean = plt.subplots()
+    #     sns.countplot(x=column_name_clean, data=clean_data, ax=ax_clean)
+    #     if clean_data_col.button("Toggle Plot Size"):
+    #         clean_data_col.pyplot(fig_clean)
+    #     else:
+    #         st.pyplot(fig_clean)
         
 
 
