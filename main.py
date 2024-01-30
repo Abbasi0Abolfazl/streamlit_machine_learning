@@ -1,3 +1,4 @@
+import time
 import streamlit as st
 import pandas as pd
 from streamlit_option_menu import option_menu
@@ -17,6 +18,9 @@ st.markdown("""
             text-align: right;
             font-size: 30px;
         }
+        [data-testid="stNotificationContentError"]{direction: rtl;}
+        [data-testid="stButton"]{direction: rtl;text-align: right;}
+        [data-testid="stCheckbox"]{direction: rtl;text-align: right;}
 
         .downloadBTN { 
             text-decoration: none; 
@@ -42,6 +46,7 @@ st.markdown("""
         .stHeadingContainer {text-align: center !important}
         
         [data-testid="InputInstructions"] { display: None; } 
+        
     </style>
 
 """, unsafe_allow_html=True)
@@ -105,9 +110,22 @@ def do_home():
 </html>
 """, unsafe_allow_html=True)
 
+def chart_to_base64(plt_chart):
+    """
+    Convert Matplotlib chart to base64 for Streamlit
+    """
+    import base64
+    import io
 
+    buffer = io.BytesIO()
+    plt_chart.savefig(buffer, format='png')
+    buffer.seek(0)
+    image_base64 = base64.b64encode(buffer.read()).decode('utf-8')
+    plt_chart.clear()
 
+    return image_base64
 
+        
 def load_data():
     bad_data = pd.read_csv(r"CSV_data\bad_data.csv", encoding='latin1')
     clean_data = pd.read_csv(r"CSV_data\clean_data.csv", encoding='latin1')
@@ -122,45 +140,91 @@ def do_laptop():
     show_chart = st.checkbox("نمایش نمودار")
 
     if show_chart:
-        st.header("Bad Data Visualization")
-        column_name_bad = st.selectbox("ستون را مشخص کنید", list(bad_data.columns))
-        
-        fig_bad, ax_bad = plt.subplots()
-        sns.countplot(x=column_name_bad, data=bad_data, ax=ax_bad)
-        
-        size_option = st.radio("انتخاب اندازه نمودار", ["کوچک", "متوسط", "بزرگ"])
-        size_mapping = {"کوچک": (3, 1), "متوسط": (10, 8), "بزرگ": (12, 10)}
-        fig_bad.set_size_inches(size_mapping[size_option])
+            st.header("نمودار داده ناسالم")
+            column_name_bad = st.selectbox("ستون را مشخص کنید", list(bad_data.columns))
+            
+            st.set_option('deprecation.showPyplotGlobalUse', False)  # Disable deprecation warning
+            fig_bad, ax_bad = plt.subplots(figsize=(9, 7))
+            
+            sns.countplot(x=column_name_bad, data=bad_data, ax=ax_bad)
 
-        st.pyplot(fig_bad)
-
-
+            ax_bad.tick_params(axis='x', rotation=80)
+            st.markdown(f'<img src="data:image/png;base64,{chart_to_base64(fig_bad)}" style="width: auto;">', unsafe_allow_html=True)
+    st.markdown("<h3 style='color:green;direction: rtl;'>فایل مورد استفاده صحیح برای Train (تمرین دادن)  ماشین که این فایل پردازش و اصلاح شده</h3>",
+                unsafe_allow_html=True)
 
     st.markdown("<h3 style='color:green;direction: rtl;'>فایل مورد استفاده صحیح برای Train (تمرین دادن)  ماشین که این فایل پردازش و اصلاح شده</h3>", unsafe_allow_html=True)
     st.write(clean_data.head())
 
-    # st.sidebar.header("برای نمایش نمودار برای هر کدام بر روی دکمه مربوطه کلیک کنید")
+    show_chart = st.checkbox("نمایش نمودار داده صحیح")
+
+    if show_chart:
+            st.header("نمودار داده صحیح")
+            column_name_clean = st.selectbox("ستون را مشخص کنید", list(clean_data.columns))
+            
+            st.set_option('deprecation.showPyplotGlobalUse', False)  # Disable deprecation warning
+            fig_bad, ax_bad = plt.subplots(figsize=(9, 7))
+            
+            sns.countplot(x=column_name_clean, data=clean_data, ax=ax_bad)
+
+            ax_bad.tick_params(axis='x', rotation=80)
+            st.markdown(f'<img src="data:image/png;base64,{chart_to_base64(fig_bad)}" style="width: auto;">', unsafe_allow_html=True)
+            
 
 
-    
+# def uppppp():
 
-    # if clean_data_col.button("Clean Data"):
-    #     clean_data_col.header("Clean Data Visualization")
-    #     column_name_clean = clean_data_col.selectbox("ستون را مشخص کنید", list(clean_data.columns))
-        
-    #     fig_clean, ax_clean = plt.subplots()
-    #     sns.countplot(x=column_name_clean, data=clean_data, ax=ax_clean)
-    #     if clean_data_col.button("Toggle Plot Size"):
-    #         clean_data_col.pyplot(fig_clean)
-    #     else:
-    #         st.pyplot(fig_clean)
-        
+#     uploaded_file = st.file_uploader("Choose a file")
+#     print(uploaded_file)
+#     if uploaded_file is not None:
+#         st.write("You selected the file:", uploaded_file.name)
+#         df = pd.read_csv(uploaded_file)
+#         return df
+
+# def do_estimation_us():
+#     st.markdown('### House Price Estimation (USA)')
+#     if 'clicked' not in st.session_state:
+#         st.session_state.clicked = False
+#     st.button('Upload File', on_click=set_clicked)
+#     if st.session_state.clicked:
+#         df = uppppp()
+#         if df is not None:
+#             st.write(df)
 
 
 
+def upload_file():
+    uploaded_file = st.file_uploader("Choose a file")
+    return uploaded_file
 
 def do_estimation_us():
     st.markdown('### House Price Estimation (USA)')
+    
+    if 'clicked' not in st.session_state:
+        st.session_state.clicked = False
+
+    # Use st.button with on_click callback to handle the file upload
+    if st.button('Upload File'):
+        st.session_state.clicked = True
+
+    # Check if the button is clicked and perform the file upload
+    if st.session_state.clicked:
+        uploaded_file = upload_file()
+
+        # Process the uploaded file
+        if uploaded_file is not None:
+            st.write("You selected the file:", uploaded_file.name)
+            try:
+                df = pd.read_csv(uploaded_file)
+                st.write(df)
+            except Exception as  e:
+                
+                st.error(f"این فایل قابل نمایش نیست به دلیل : {e}")
+
+
+
+            
+            
 
 def do_estimation_iran():
     st.markdown('### House Price Estimation (Iran)')
