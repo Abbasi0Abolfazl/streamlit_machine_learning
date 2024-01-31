@@ -126,15 +126,21 @@ def load_data():
     clean_data = pd.read_csv(r"CSV_data\clean_data.csv", encoding='latin1')
     return bad_data, clean_data
 
+    
+
 def do_laptop():
     bad_data, clean_data = load_data()
 
-    st.markdown("<h3 style='color:red;direction: rtl;'>نمونه داده ناسالم(نامناسب برای یادگیری ماشین)</h3>", unsafe_allow_html=True)
-    st.write(bad_data.head())
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("<h3 style='color:red;direction: rtl;'>نمونه داده ناسالم(نامناسب برای یادگیری ماشین)</h3>", unsafe_allow_html=True)
+        
+        st.write(bad_data.head())
 
-    show_chart = st.checkbox("نمایش نمودار")
-
-    if show_chart:
+        show_chart_bad = st.checkbox("نمایش نمودار")
+        
+        if show_chart_bad:
             st.header("نمودار داده ناسالم")
             column_name_bad = st.selectbox("ستون را مشخص کنید", list(bad_data.columns))
             
@@ -145,26 +151,25 @@ def do_laptop():
 
             ax_bad.tick_params(axis='x', rotation=80)
             st.markdown(f'<img src="data:image/png;base64,{chart_to_base64(fig_bad)}" style="width: auto;">', unsafe_allow_html=True)
-    st.markdown("<h3 style='color:green;direction: rtl;'>فایل مورد استفاده صحیح برای Train (تمرین دادن)  ماشین که این فایل پردازش و اصلاح شده</h3>",
-                unsafe_allow_html=True)
 
-    st.markdown("<h3 style='color:green;direction: rtl;'>فایل مورد استفاده صحیح برای Train (تمرین دادن)  ماشین که این فایل پردازش و اصلاح شده</h3>", unsafe_allow_html=True)
-    st.write(clean_data.head())
+    with col2:
+        st.markdown("<h3 style='color:green;direction: rtl;'>نمونه داده سالم(پردازش شده)</h3>", unsafe_allow_html=True)        
+        st.write(clean_data.head())
 
-    show_chart = st.checkbox("نمایش نمودار داده صحیح")
-
-    if show_chart:
+        show_chart_clean = st.checkbox("نمایش نمودار داده صحیح")
+        
+        if show_chart_clean:
             st.header("نمودار داده صحیح")
             column_name_clean = st.selectbox("ستون را مشخص کنید", list(clean_data.columns))
             
             st.set_option('deprecation.showPyplotGlobalUse', False)  # Disable deprecation warning
-            fig_bad, ax_bad = plt.subplots(figsize=(9, 7))
+            fig_clean, ax_clean = plt.subplots(figsize=(9, 7))
             
-            sns.countplot(x=column_name_clean, data=clean_data, ax=ax_bad)
+            sns.countplot(x=column_name_clean, data=clean_data, ax=ax_clean)
 
-            ax_bad.tick_params(axis='x', rotation=80)
-            st.markdown(f'<img src="data:image/png;base64,{chart_to_base64(fig_bad)}" style="width: auto;">', unsafe_allow_html=True)
-            
+            ax_clean.tick_params(axis='x', rotation=80)
+            st.markdown(f'<img src="data:image/png;base64,{chart_to_base64(fig_clean)}" style="width: auto;">', unsafe_allow_html=True)
+
 
 def upload_file():
     uploaded_file = st.file_uploader("Choose a file")
