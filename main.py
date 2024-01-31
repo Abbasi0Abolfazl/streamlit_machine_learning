@@ -126,13 +126,12 @@ def load_data():
     clean_data = pd.read_csv(r"CSV_data\clean_data.csv", encoding='latin1')
     return bad_data, clean_data
 
-    
 
 def do_laptop():
     bad_data, clean_data = load_data()
 
     col1, col2 = st.columns(2)
-    
+
     with col1:
         st.markdown("<h3 style='color:red;direction: rtl;'>نمونه داده ناسالم(نامناسب برای یادگیری ماشین)</h3>", unsafe_allow_html=True)
         
@@ -147,10 +146,10 @@ def do_laptop():
             st.set_option('deprecation.showPyplotGlobalUse', False)  # Disable deprecation warning
             fig_bad, ax_bad = plt.subplots(figsize=(9, 7))
             
-            sns.countplot(x=column_name_bad, data=bad_data, ax=ax_bad)
+            sns.countplot(x=column_name_bad, data=bad_data)
 
             ax_bad.tick_params(axis='x', rotation=80)
-            st.markdown(f'<img src="data:image/png;base64,{chart_to_base64(fig_bad)}" style="width: auto;">', unsafe_allow_html=True)
+            st.pyplot(fig_bad)
 
     with col2:
         st.markdown("<h3 style='color:green;direction: rtl;'>نمونه داده سالم(پردازش شده)</h3>", unsafe_allow_html=True)        
@@ -165,10 +164,10 @@ def do_laptop():
             st.set_option('deprecation.showPyplotGlobalUse', False)  # Disable deprecation warning
             fig_clean, ax_clean = plt.subplots(figsize=(9, 7))
             
-            sns.countplot(x=column_name_clean, data=clean_data, ax=ax_clean)
+            sns.countplot(x=column_name_clean, data=clean_data)
 
             ax_clean.tick_params(axis='x', rotation=80)
-            st.markdown(f'<img src="data:image/png;base64,{chart_to_base64(fig_clean)}" style="width: auto;">', unsafe_allow_html=True)
+            st.pyplot(fig_clean)
 
 
 def upload_file():
