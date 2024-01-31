@@ -50,12 +50,7 @@ st.markdown("""
     </style>
 
 """, unsafe_allow_html=True)
-        # .st-emotion-cache-zt5igj{color: red;}
 
-
-
-
-    
     
 def do_home():
     st.title("به سایت `تخمینگر` خوش آمدید ")
@@ -170,28 +165,6 @@ def do_laptop():
             ax_bad.tick_params(axis='x', rotation=80)
             st.markdown(f'<img src="data:image/png;base64,{chart_to_base64(fig_bad)}" style="width: auto;">', unsafe_allow_html=True)
             
-
-
-# def uppppp():
-
-#     uploaded_file = st.file_uploader("Choose a file")
-#     print(uploaded_file)
-#     if uploaded_file is not None:
-#         st.write("You selected the file:", uploaded_file.name)
-#         df = pd.read_csv(uploaded_file)
-#         return df
-
-# def do_estimation_us():
-#     st.markdown('### House Price Estimation (USA)')
-#     if 'clicked' not in st.session_state:
-#         st.session_state.clicked = False
-#     st.button('Upload File', on_click=set_clicked)
-#     if st.session_state.clicked:
-#         df = uppppp()
-#         if df is not None:
-#             st.write(df)
-
-
 
 def upload_file():
     uploaded_file = st.file_uploader("Choose a file")
