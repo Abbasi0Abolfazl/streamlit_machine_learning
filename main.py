@@ -1,9 +1,12 @@
 import time
 import streamlit as st
 import pandas as pd
+import numpy as np
 from streamlit_option_menu import option_menu
 import matplotlib.pyplot as plt
 import seaborn as sns
+import arabic_reshaper
+from bidi.algorithm import get_display
 
 st.set_page_config(
     page_title="Estimator - تخمینگر",
@@ -41,6 +44,13 @@ st.markdown("""
 
         .css-pxxe24 {
             visibility: hidden;
+        }
+        
+        .custom-button {
+        margin-top: 100px;
+        margin-bottom: 100px;
+        margin-right: 1000px;
+        margin-left: 1000px;
         }
 
         .stHeadingContainer {text-align: center !important}
@@ -120,88 +130,179 @@ def chart_to_base64(plt_chart):
 
     return image_base64
 
-        
+
+def upload_file():
+    uploaded_file = st.file_uploader("", type=["csv", 'xlsx'])
+    return uploaded_file
+
+
 def load_data():
     bad_data = pd.read_csv(r"CSV_data\bad_data.csv", encoding='latin1')
     clean_data = pd.read_csv(r"CSV_data\clean_data.csv", encoding='latin1')
     return bad_data, clean_data
+def initialize_session_state():
+    if 'remove' not in st.session_state:
+        st.session_state.remove = False
+    if 'clicked' not in st.session_state:
+        st.session_state.clicked = False
+        
+def count_empty_values(df):
+    empty_values = df.isnull().sum()
+    return empty_values
 
+def count_text_values(df):
+    text_columns = df.select_dtypes(include=['object']).columns
+    text_empty_values = df[text_columns].isna()
+    text_empty_counts = text_empty_values.sum()
+    return text_empty_counts
 
+def plot_bad_data_chart(df):
+    text_empty_counts = count_text_values(df)
+    plt.bar(text_empty_counts.index, text_empty_counts.values)
+    plt.xlabel(get_display(arabic_reshaper.reshape('ستون‌ها')))  # استفاده از arabic_reshaper
+    plt.ylabel(get_display(arabic_reshaper.reshape('تعداد داده‌های خالی')))
+    plt.title(get_display(arabic_reshaper.reshape('نمودار داده خراب')))
+    plt.xticks(rotation=45) 
+    st.pyplot()
+
+def plot_correlation_heatmap(df):
+    numeric_df = df.select_dtypes(include=[np.number])
+
+    if numeric_df.empty:
+        st.warning("هیچ ستون عددی برای تحلیل همبستگی یافت نشد.")
+        return
+
+    correlation_matrix = numeric_df.corr()
+
+    try:
+        sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt=".2f")
+        plt.show()
+        st.pyplot()
+    except Exception as e:
+        st.warning("نمایش نمودار به دلیل مشکلات فنی امکانپذیر نیست. دلیل: ", e)
+    
+    
 def do_laptop():
+    initialize_session_state()
+    
+    if st.button('آپلود فایل'):
+        st.session_state.clicked = True
+
+    if st.session_state.clicked:
+        uploaded_file = upload_file()
+        if uploaded_file is not None:
+            st.session_state.remove = True
+            try:
+                user_df = pd.read_csv(uploaded_file)
+            except Exception as  e:
+                st.error(f"این فایل قابل نمایش نیست به دلیل : {e}")
+                st.session_state.remove = False
+                
+
     bad_data, clean_data = load_data()
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-        st.markdown("<h3 style='color:red;direction: rtl;'>نمونه داده ناسالم(نامناسب برای یادگیری ماشین)</h3>", unsafe_allow_html=True)
+    if not st.session_state.remove:
+        col1, col2 = st.columns(2)
         
-        st.write(bad_data.head())
+        with col1:
+            st.markdown("<h3 style='color:red;direction: rtl;'>نمونه داده ناسالم(نامناسب برای یادگیری ماشین)</h3>", unsafe_allow_html=True)
+            
+            st.write(bad_data.head())
 
-        show_chart_bad = st.checkbox("نمایش نمودار")
+            show_chart_bad = st.checkbox("نمایش نمودار")
+            
+            if show_chart_bad:
+                st.header("نمودار داده ناسالم")
+                column_name_bad = st.selectbox("ستون را مشخص کنید", list(bad_data.columns))
+                
+                st.set_option('deprecation.showPyplotGlobalUse', False)  
+                fig_bad, ax_bad = plt.subplots(figsize=(9, 7))
+                
+                sns.countplot(x=column_name_bad, data=bad_data)
+
+                ax_bad.tick_params(axis='x', rotation=80)
+                st.pyplot(fig_bad)
+
+        with col2:
+            st.markdown("<h3 style='color:green;direction: rtl;'>نمونه داده سالم(پردازش شده)</h3>", unsafe_allow_html=True)        
+            st.write(clean_data.head())
+
+            show_chart_clean = st.checkbox("نمایش نمودار داده صحیح")
+            
+            if show_chart_clean:
+                st.header("نمودار داده صحیح")
+                column_name_clean = st.selectbox("ستون را مشخص کنید", list(clean_data.columns))
+                
+                st.set_option('deprecation.showPyplotGlobalUse', False)  
+                fig_clean, ax_clean = plt.subplots(figsize=(9, 7))
+                
+                sns.countplot(x=column_name_clean, data=clean_data)
+
+                ax_clean.tick_params(axis='x', rotation=80)
+                st.pyplot(fig_clean)
+                
+    else: 
+        col1_U, col2_U = st.columns(2)
+
+        with col2_U:
+            
+            st.markdown("<div class='custom-button'>", unsafe_allow_html=True)
+            if st.button("پردازش"):
+                st.write('sssssssssss')
+            else:
+                st.write("برای پردازش فایل بارگزاری شده خود لطفا بر روری دکمه 'پردازش' کلیک کنید")
+            st.markdown("</div>", unsafe_allow_html=True)
+
+
+        with col1_U:
+            st.markdown("<h3 style='color:blue;direction: rtl;'>داده بارگزاری شده توسط کاربر</h3>", unsafe_allow_html=True)
+
+            st.write(user_df.head())
+        # check_box_1, check_box_2, check_box_3, check_box_4= st.columns(4)
         
-        if show_chart_bad:
-            st.header("نمودار داده ناسالم")
-            column_name_bad = st.selectbox("ستون را مشخص کنید", list(bad_data.columns))
+        # with check_box_1:
+        #     show_chart_U = st.checkbox("نمایش نمودار")
+        #     if show_chart_U:
+        #         column_name_U = st.selectbox("", list(user_df.columns))
+
+        #         st.set_option('deprecation.showPyplotGlobalUse', False)  
+        #         fig_u, ax_u = plt.subplots(figsize=(9, 7))
+
+        #         sns.countplot(x=column_name_U, data=user_df)
+
+        #         ax_u.tick_params(axis='x', rotation=90)
+        #         st.pyplot(fig_u)
+        # with check_box_2:
+        #     show_empty_values = st.checkbox("نمایش تعداد داده‌های خالی")
+
+        #     if show_empty_values:
+        #         empty_values = count_empty_values(user_df)
+        #         st.write(empty_values)
+                
+        # with check_box_3:    
+        #     show_heatmap = st.checkbox("نمایش نمودار هیت‌مپ ماتریس همبستگی")
+                
+        #     if show_heatmap:
+        #         plot_correlation_heatmap(user_df)
             
-            st.set_option('deprecation.showPyplotGlobalUse', False)  # Disable deprecation warning
-            fig_bad, ax_bad = plt.subplots(figsize=(9, 7))
-            
-            sns.countplot(x=column_name_bad, data=bad_data)
-
-            ax_bad.tick_params(axis='x', rotation=80)
-            st.pyplot(fig_bad)
-
-    with col2:
-        st.markdown("<h3 style='color:green;direction: rtl;'>نمونه داده سالم(پردازش شده)</h3>", unsafe_allow_html=True)        
-        st.write(clean_data.head())
-
-        show_chart_clean = st.checkbox("نمایش نمودار داده صحیح")
-        
-        if show_chart_clean:
-            st.header("نمودار داده صحیح")
-            column_name_clean = st.selectbox("ستون را مشخص کنید", list(clean_data.columns))
-            
-            st.set_option('deprecation.showPyplotGlobalUse', False)  # Disable deprecation warning
-            fig_clean, ax_clean = plt.subplots(figsize=(9, 7))
-            
-            sns.countplot(x=column_name_clean, data=clean_data)
-
-            ax_clean.tick_params(axis='x', rotation=80)
-            st.pyplot(fig_clean)
+        # with check_box_4:    
+        #             show_bad_data = st.checkbox("نمودار داده خراب")
+        #             if show_bad_data:
+        #                 plot_bad_data_chart(user_df)
 
 
-def upload_file():
-    uploaded_file = st.file_uploader("Choose a file")
-    return uploaded_file
+
+
+
 
 def do_estimation_us():
     st.markdown('### House Price Estimation (USA)')
-    
-    if 'clicked' not in st.session_state:
-        st.session_state.clicked = False
+    input = st.text_input("text", key="text")
 
-    # Use st.button with on_click callback to handle the file upload
-    if st.button('Upload File'):
-        st.session_state.clicked = True
-
-    # Check if the button is clicked and perform the file upload
-    if st.session_state.clicked:
-        uploaded_file = upload_file()
-
-        # Process the uploaded file
-        if uploaded_file is not None:
-            st.write("You selected the file:", uploaded_file.name)
-            try:
-                df = pd.read_csv(uploaded_file)
-                st.write(df)
-            except Exception as  e:
-                
-                st.error(f"این فایل قابل نمایش نیست به دلیل : {e}")
-
-
-
-            
-            
+    def clear_text():
+        st.session_state["text"] = ""
+        
+    st.button("clear text input", on_click=clear_text)
+    st.write(input)
 
 def do_estimation_iran():
     st.markdown('### House Price Estimation (Iran)')
