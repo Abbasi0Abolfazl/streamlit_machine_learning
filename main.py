@@ -1,3 +1,5 @@
+
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 import time
 import streamlit as st
 import pandas as pd
@@ -6,6 +8,9 @@ from streamlit_option_menu import option_menu
 import matplotlib.pyplot as plt
 import seaborn as sns
 import arabic_reshaper
+from sklearn.preprocessing import StandardScaler
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.model_selection import train_test_split
 from bidi.algorithm import get_display
 
 st.set_page_config(
@@ -54,6 +59,7 @@ st.markdown("""
         }
 
         .stHeadingContainer {text-align: center !important}
+        [data-testid="stNotificationContentInfo"]{direction: rtl;text-align: right;font-weight: 900;}
         
         [data-testid="InputInstructions"] { display: None; } 
         
@@ -135,16 +141,6 @@ def upload_file():
     uploaded_file = st.file_uploader("", type=["csv", 'xlsx'])
     return uploaded_file
 
-
-def load_data():
-    bad_data = pd.read_csv(r"CSV_data\bad_data.csv", encoding='latin1')
-    clean_data = pd.read_csv(r"CSV_data\clean_data.csv", encoding='latin1')
-    return bad_data, clean_data
-def initialize_session_state():
-    if 'remove' not in st.session_state:
-        st.session_state.remove = False
-    if 'clicked' not in st.session_state:
-        st.session_state.clicked = False
         
 def count_empty_values(df):
     empty_values = df.isnull().sum()
@@ -159,7 +155,7 @@ def count_text_values(df):
 def plot_bad_data_chart(df):
     text_empty_counts = count_text_values(df)
     plt.bar(text_empty_counts.index, text_empty_counts.values)
-    plt.xlabel(get_display(arabic_reshaper.reshape('ستون‌ها')))  # استفاده از arabic_reshaper
+    plt.xlabel(get_display(arabic_reshaper.reshape('ستون‌ها')))  
     plt.ylabel(get_display(arabic_reshaper.reshape('تعداد داده‌های خالی')))
     plt.title(get_display(arabic_reshaper.reshape('نمودار داده خراب')))
     plt.xticks(rotation=45) 
@@ -180,11 +176,175 @@ def plot_correlation_heatmap(df):
         st.pyplot()
     except Exception as e:
         st.warning("نمایش نمودار به دلیل مشکلات فنی امکانپذیر نیست. دلیل: ", e)
+
+def show_other_chart(user_df):
     
+    show_chart_U = st.checkbox("نمایش نمودار")
+    if show_chart_U:
+        column_name_U = st.selectbox("", list(user_df.columns))
+
+        st.set_option('deprecation.showPyplotGlobalUse', False)  
+        fig_u, ax_u = plt.subplots(figsize=(9, 7))
+
+        sns.countplot(x=column_name_U, data=user_df)
+
+        ax_u.tick_params(axis='x', rotation=90)
+        st.pyplot(fig_u)
+        
+        
+    show_empty_values = st.checkbox("نمایش تعداد داده‌های خالی")
+
+    if show_empty_values:
+        empty_values = count_empty_values(user_df)
+        st.bar_chart(empty_values)
+        # st.write(empty_values)
+            
+    show_heatmap = st.checkbox("نمایش نمودار هیت‌مپ ماتریس همبستگی")
+        
+    if show_heatmap:
+        plot_correlation_heatmap(user_df)
+        
+    show_bad_data = st.checkbox("نمودار داده خراب")
+    if show_bad_data:
+        plot_bad_data_chart(user_df)
+
+def load_data():
+    bad_data = pd.read_csv(r"CSV_data\bad_data.csv", encoding='latin1')
+    clean_data = pd.read_csv(r"CSV_data\clean_data.csv", encoding='latin1')
+    return bad_data, clean_data
+
+
+def initialize_session_state():
+    if 'remove' not in st.session_state:
+        st.session_state.remove = False
+    if 'clicked' not in st.session_state:
+        st.session_state.clicked = False
+    if 'show_chart' not in st.session_state:
+        st.session_state.show_chart = False
+    if 'prediction' not in st.session_state:
+        st.session_state.prediction = False
+
+
     
 def do_laptop():
-    initialize_session_state()
-    
+    initialize_session_state() 
+    bad_data, clean_data = load_data()
+        
+    if st.button("تخمین قیمت "):
+        st.session_state.prediction = True
+        
+    if st.session_state.prediction:
+        x = clean_data.drop('Price_euros', axis=1)
+        y = clean_data['Price_euros']
+        x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.15, random_state=42)
+        scaler = StandardScaler()
+        x_train_scaled = scaler.fit_transform(x_train)
+        x_test_scaled = scaler.transform(x_test)
+
+        forest = RandomForestRegressor()
+        forest.fit(x_train_scaled, y_train)
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            os_category = st.selectbox('نوع سیستم عامل', ['Windows', 'Linux', 'No OS'])
+        with col2:
+            company_category = st.selectbox('شرکت سازنده لپ تاپ', ['Acer', 'Razer', 'MSI'])
+        windows_selected = 1 if os_category == 'Windows' else 0
+        linux_selected = 1 if os_category == 'Linux' else 0
+        no_os_selected = 1 if os_category == 'No OS' else 0
+        
+        
+        cpu_category = st.selectbox('شرکت سازنده پردازنده', ['ADM', 'Intel'])
+        gpu_category = st.selectbox('شرکت سازنده کارت گرافیک', ['NVIDIA', 'Intel', 'ADM'])
+        laptop_type = st.selectbox('نوع لپ تاپ', ['Workstation','Ultrabook','Gaming','Notebook'])
+        
+        acer_selected = razer_selected = msi_selected = 0
+        amd_selected = intel_selected = 0
+        nvidia_selected = intel_gpu_selected = amd_gpu_selected = 0
+        workstation_selected = ultrabook_selected = gaming_selected = notebook_selected = 0
+
+        if company_category == 'Acer':
+            acer_selected = 1
+        elif company_category == 'Razer':
+            razer_selected = 1
+        elif company_category == 'MSI':
+            msi_selected = 1
+
+        if cpu_category == 'AMD':
+            amd_selected = 1
+        elif cpu_category == 'Intel':
+            intel_selected = 1
+
+        if gpu_category == 'NVIDIA':
+            nvidia_selected = 1
+        elif gpu_category == 'Intel':
+            intel_gpu_selected = 1
+        elif gpu_category == 'AMD':
+            amd_gpu_selected = 1
+
+        if laptop_type == 'Workstation':
+            workstation_selected = 1
+        elif laptop_type == 'Ultrabook':
+            ultrabook_selected = 1
+        elif laptop_type == 'Gaming':
+            gaming_selected = 1
+        elif laptop_type == 'Notebook':
+            notebook_selected = 1
+        
+        
+        weight = st.selectbox('وزن', [1.37, 1.83, 1.37])
+        screen_height = st.selectbox('ارتفاع صفحه نمایش (پیکسل)', sorted(clean_data['Screen Height'].unique()))
+        screen_width = st.selectbox('عرض صفحه (پیکسل)', sorted(clean_data['Screen Width'].unique()))
+        ram = st.selectbox('رم (GB)', sorted(clean_data['Ram'].unique()))
+        cpu_frequency = st.selectbox('CPU فرکانس (GHz)', [1.8, 3.1, 2.3])
+        
+        
+        user_input = pd.DataFrame({
+            'Windows': [windows_selected],
+            'Linux': [linux_selected],
+            'No OS': [no_os_selected],
+            'MSI': [msi_selected],
+            'AMD CPU': [amd_selected],
+            'Intel CPU': [intel_selected],
+            'Intel GPU': [intel_gpu_selected],
+            'AMD GPU': [amd_gpu_selected],
+            'Acer': [acer_selected],
+            'Weight': [weight],
+            'Razer': [razer_selected],
+            'Workstation': [workstation_selected],
+            'Ultrabook': [ultrabook_selected],
+            'Nvidia GPU': [nvidia_selected],
+            'Gaming': [gaming_selected],
+            'CPU Frequency': [cpu_frequency],
+            'Notebook': [notebook_selected],
+            'Screen Height (Pixels)': [screen_height],
+            'Screen Width (Pixels)': [screen_width],
+            'Ram (GB)': [ram]
+        })
+        
+        user_input.columns = x.columns
+
+        user_input_scaled = scaler.transform(user_input)
+
+        predicted_price = forest.predict(user_input_scaled)
+        st.write(f'قیمت تخمینی لپ تاپ: {predicted_price[0]:,.2f} یورو')
+        
+        y_pred = forest.predict(x_test_scaled)
+
+        mae = mean_absolute_error(y_test, y_pred)
+        mse = mean_squared_error(y_test, y_pred)
+        r2 = r2_score(y_test, y_pred)
+
+        # نمایش معیارهای دقت
+        st.write(f'خطای میانگین مطلق: {mae:,.2f} یورو')
+        st.write(f'خطای میانگین مربعات: {mse:,.2f} یورو')
+        st.write(f'{r2:.4f} : R-squared (R2) امتیاز ')
+
+        # محاسبه درصد دقت
+        دقت_درصدی = forest.score(x_test_scaled, y_test) * 100
+        st.write(f'{دقت_درصدی:.2f}% : دقت مدل ')
+
+
     if st.button('آپلود فایل'):
         st.session_state.clicked = True
 
@@ -199,7 +359,7 @@ def do_laptop():
                 st.session_state.remove = False
                 
 
-    bad_data, clean_data = load_data()
+
     if not st.session_state.remove:
         col1, col2 = st.columns(2)
         
@@ -240,54 +400,42 @@ def do_laptop():
                 ax_clean.tick_params(axis='x', rotation=80)
                 st.pyplot(fig_clean)
                 
-    else: 
+                
+    if st.session_state.remove:
         col1_U, col2_U = st.columns(2)
 
         with col2_U:
             
+            
+            
             st.markdown("<div class='custom-button'>", unsafe_allow_html=True)
+
+            if "show_other_chart" not in st.session_state:
+                st.session_state.show_other_chart = False
+
             if st.button("پردازش"):
-                st.write('sssssssssss')
+                st.session_state.show_other_chart = True
+
+            if st.session_state.show_other_chart:
+                st.info("این بخش به دلیل اینکه فایل بارگزاری شده آموزش مدل ها یادگیری ماشین ارتباط مستقیمی با داده های آموزش دیده دارد باید توسط ادمین مورد ارزیابی قرار بگیرد ")
+                st.info("شما می‌توانید برای دیدن نمودارهای بیشتر از فایل خود کلیک کنید")
+                with st.expander("نمایش نمودار"):
+                    show_other_chart(user_df)
+                    
             else:
-                st.write("برای پردازش فایل بارگزاری شده خود لطفا بر روری دکمه 'پردازش' کلیک کنید")
+                st.write("برای پردازش فایل بارگزاری شده خود لطفا بر روی دکمه 'پردازش' کلیک کنید")
+
             st.markdown("</div>", unsafe_allow_html=True)
+
 
 
         with col1_U:
             st.markdown("<h3 style='color:blue;direction: rtl;'>داده بارگزاری شده توسط کاربر</h3>", unsafe_allow_html=True)
 
             st.write(user_df.head())
-        # check_box_1, check_box_2, check_box_3, check_box_4= st.columns(4)
-        
-        # with check_box_1:
-        #     show_chart_U = st.checkbox("نمایش نمودار")
-        #     if show_chart_U:
-        #         column_name_U = st.selectbox("", list(user_df.columns))
-
-        #         st.set_option('deprecation.showPyplotGlobalUse', False)  
-        #         fig_u, ax_u = plt.subplots(figsize=(9, 7))
-
-        #         sns.countplot(x=column_name_U, data=user_df)
-
-        #         ax_u.tick_params(axis='x', rotation=90)
-        #         st.pyplot(fig_u)
-        # with check_box_2:
-        #     show_empty_values = st.checkbox("نمایش تعداد داده‌های خالی")
-
-        #     if show_empty_values:
-        #         empty_values = count_empty_values(user_df)
-        #         st.write(empty_values)
-                
-        # with check_box_3:    
-        #     show_heatmap = st.checkbox("نمایش نمودار هیت‌مپ ماتریس همبستگی")
-                
-        #     if show_heatmap:
-        #         plot_correlation_heatmap(user_df)
             
-        # with check_box_4:    
-        #             show_bad_data = st.checkbox("نمودار داده خراب")
-        #             if show_bad_data:
-        #                 plot_bad_data_chart(user_df)
+     
+
 
 
 
