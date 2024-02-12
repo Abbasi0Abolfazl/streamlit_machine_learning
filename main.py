@@ -1,4 +1,20 @@
-
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+# pip install plotly
+import plotly.graph_objs as go
+from plotly.offline import init_notebook_mode,iplot
+import plotly.express as px
+import seaborn as sns
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import KFold
+from sklearn.model_selection import cross_val_score
+from sklearn.preprocessing import LabelEncoder
+from sklearn import metrics
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.tree import DecisionTreeRegressor
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 import time
 import streamlit as st
@@ -62,6 +78,11 @@ st.markdown("""
         [data-testid="stNotificationContentInfo"]{direction: rtl;text-align: right;font-weight: 900;}
         
         [data-testid="InputInstructions"] { display: None; } 
+        
+        div[data-testid="stSelectbox"]{
+            width: 70% !important;
+            margin: 0 auto !important;
+        }
         
     </style>
 
@@ -208,13 +229,19 @@ def show_other_chart(user_df):
     if show_bad_data:
         plot_bad_data_chart(user_df)
 
-def load_data():
-    bad_data = pd.read_csv(r"CSV_data\bad_data.csv", encoding='latin1')
-    clean_data = pd.read_csv(r"CSV_data\clean_data.csv", encoding='latin1')
+def load_data(type_data):
+    clean_data = pd.read_csv(f"CSV_data\\clean_data_{type_data}.csv", encoding='latin1')
+    
+    if type_data == 'home_IR':
+        bad_data = pd.read_csv(f"CSV_data\\bad_data_{type_data}.csv")
+    else:
+        bad_data = pd.read_csv(f"CSV_data\\bad_data_{type_data}.csv", encoding='latin1')
+        
     return bad_data, clean_data
 
 
 def initialize_session_state():
+    # TODO زمانی که کاربر tab جدید میشود همه session ها باید خالی باشد
     if 'remove' not in st.session_state:
         st.session_state.remove = False
     if 'clicked' not in st.session_state:
@@ -225,11 +252,12 @@ def initialize_session_state():
         st.session_state.prediction = False
 
 
-    
 def do_laptop():
-    initialize_session_state() 
-    bad_data, clean_data = load_data()
         
+        
+    initialize_session_state() 
+    bad_data, clean_data = load_data('laptop')
+
     if st.button("تخمین قیمت "):
         st.session_state.prediction = True
         
@@ -243,12 +271,9 @@ def do_laptop():
 
         forest = RandomForestRegressor()
         forest.fit(x_train_scaled, y_train)
-        col1, col2 = st.columns(2)
         
-        with col1:
-            os_category = st.selectbox('نوع سیستم عامل', ['Windows', 'Linux', 'No OS'])
-        with col2:
-            company_category = st.selectbox('شرکت سازنده لپ تاپ', ['Acer', 'Razer', 'MSI'])
+        os_category = st.selectbox('نوع سیستم عامل', ['Windows', 'Linux', 'No OS'])
+        company_category = st.selectbox('شرکت سازنده لپ تاپ', ['Acer', 'Razer', 'MSI'])
         windows_selected = 1 if os_category == 'Windows' else 0
         linux_selected = 1 if os_category == 'Linux' else 0
         no_os_selected = 1 if os_category == 'No OS' else 0
@@ -434,18 +459,116 @@ def do_laptop():
 
             st.write(user_df.head())
             
-     
+
+def check(df):
+    l=[]
+    columns=df.columns
+    for col in columns:
+        dtypes=df[col].dtypes
+        nunique=df[col].nunique()
+        sum_null=df[col].isnull().sum()
+        l.append([col,dtypes,nunique,sum_null])
+    df_check=pd.DataFrame(l)
+    df_check.columns=['column','dtypes','nunique','sum_null']
+    return df_check 
 
 
-
-
-
-
-
-def do_estimation_us():
+def do_estimation_iran():
     initialize_session_state() 
-    bad_data, clean_data = load_data()
+    bad_data, clean_data = load_data('home_IR')
     
+
+    if st.button("تخمین قیمت "):
+        st.session_state.prediction = True
+        
+    if st.session_state.prediction:
+        X = clean_data.drop(['rent','deposit'],axis=1)
+        Y = clean_data.pop('all_to_deposit')
+
+        
+        regression_tree_houses = DecisionTreeRegressor()
+
+        X_train,X_test,y_train,y_test=train_test_split(X,Y,test_size=0.4,random_state=0)
+        regression_tree_houses.fit(X_train, y_train)
+        def format_func(value):
+            return int(value)
+        
+
+        
+        region_user = st.selectbox('طبقه ساختمانی که خانه در آن قرار دارد',
+                             sorted(region.unique()))
+        region_user_index = df1[region == region_user].index[0]
+        region_user_address = df1.at[region_user_index, 'address']
+        
+        floor = st.selectbox('طبقه ساختمانی که خانه در آن قرار دارد',
+                             sorted(clean_data['floor'].unique()),
+                             format_func=format_func,
+                             help='عدد 0 نشان دهنده طبقه همکف است')
+        
+        area = st.selectbox('مساحت خانه براساس متر مربع',
+                            sorted(clean_data['area'].unique()),
+                            format_func=format_func)
+        
+        age = st.selectbox('سن خانه(چند سال از ساخت خانه میگذرد )',
+                           sorted(clean_data['age'].unique()),
+                           format_func=format_func,
+                           help='عدد 0 نشان دهنده این است که سن این خانه هنوز به یکسال هم نرسیده است')
+        
+        rooms = st.selectbox('تعداد اتاق های خانه',
+                            sorted(clean_data['rooms'].unique()),
+                            format_func=format_func)
+        
+        elavator = st.selectbox('وجود آسانسور در خانه', ['وجود دارد ', 'وجود ندارد'])
+        elavator = 1 if elavator == 'وجود دارد ' else 0
+
+        parking = st.selectbox('وجود پارکینگ در خانه', ['وجود دارد ', 'وجود ندارد'])
+        parking = 1 if parking == 'وجود دارد ' else 0
+        
+        Warehouse = st.selectbox('وجود انبار در خانه', ['وجود دارد ', 'وجود ندارد'], )
+        Warehouse = 1 if Warehouse == 'وجود دارد ' else 0
+        st.write(X_test)
+        y_pred_tree = regression_tree_houses.predict(X_test)
+        st.write(f'r2_score: {metrics.r2_score(y_test,y_pred_tree)}')
+        st.write(f'explained_variance_score: {metrics.explained_variance_score(y_test,y_pred_tree)}')
+        st.write(f'mean_squared_error: {metrics.mean_squared_error(y_test,y_pred_tree)}')
+        st.write(f'mean_absolute_error: {metrics.mean_absolute_error(y_test,y_pred_tree)}')
+        
+        
+        user_input = pd.DataFrame({
+            'address': [region_user_address],
+            'floor': [floor],
+            'area': [area],
+            'age': [age],
+            'rooms': [rooms],
+        })
+        
+        # user_input.columns = X.columns
+
+        # user_input_scaled = regression_tree_houses.transform(user_input)
+
+        # predicted_price = regression_tree_houses.predict(user_input_scaled)
+        # st.write(f'قیمت تخمینی لپ تاپ: {predicted_price[0]:,.2f} یورو')
+        
+        # y_pred = regression_tree_houses.predict(X_test)
+
+        # mae = mean_absolute_error(y_test, y_pred)
+        # mse = mean_squared_error(y_test, y_pred)
+        # r2 = r2_score(y_test, y_pred)
+
+        # نمایش معیارهای دقت
+        # st.write(f'خطای میانگین مطلق: {mae:,.2f} یورو')
+        # st.write(f'خطای میانگین مربعات: {mse:,.2f} یورو')
+        # st.write(f'{r2:.4f} : R-squared (R2) امتیاز ')
+
+        # # محاسبه درصد دقت
+        # دقت_درصدی = regression_tree_houses.score(X_test, y_test) * 100
+        # st.write(f'{دقت_درصدی:.2f}% : دقت مدل ')
+
+
+
+
+
+
     if st.button('آپلود فایل'):
         st.session_state.clicked = True
 
@@ -534,10 +657,12 @@ def do_estimation_us():
             st.markdown("<h3 style='color:blue;direction: rtl;'>داده بارگزاری شده توسط کاربر</h3>", unsafe_allow_html=True)
 
             st.write(user_df.head())
+            
+            
 
-def do_estimation_iran():
+def do_estimation_us():
     initialize_session_state() 
-    bad_data, clean_data = load_data()
+    bad_data, clean_data = load_data('home_US')
     
     if st.button('آپلود فایل'):
         st.session_state.clicked = True
@@ -679,6 +804,7 @@ def show_menu(menu):
         raise ValueError(f"Unknown view panel value: {with_view_panel}. Must be 'main'.")
 
     if menu['items'][menu_selection]['action']:
+        
         menu['items'][menu_selection]['action']()
 
 show_menu(menu)
