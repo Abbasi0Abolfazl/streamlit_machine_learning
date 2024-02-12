@@ -1,39 +1,27 @@
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-# pip install plotly
-import plotly.graph_objs as go
-from plotly.offline import init_notebook_mode,iplot
-import plotly.express as px
-import seaborn as sns
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import LinearRegression
-from sklearn.model_selection import KFold
-from sklearn.model_selection import cross_val_score
-from sklearn.preprocessing import LabelEncoder
-from sklearn import metrics
-from sklearn.preprocessing import PolynomialFeatures
-from sklearn.tree import DecisionTreeRegressor
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
-import time
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import LabelEncoder
+from sklearn.tree import DecisionTreeRegressor
+from streamlit_option_menu import option_menu
+from bidi.algorithm import get_display
+from sklearn import metrics
+
+import matplotlib.pyplot as plt
 import streamlit as st
+import arabic_reshaper
+import seaborn as sns
 import pandas as pd
 import numpy as np
-from streamlit_option_menu import option_menu
-import matplotlib.pyplot as plt
-import seaborn as sns
-import arabic_reshaper
-from sklearn.preprocessing import StandardScaler
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.model_selection import train_test_split
-from bidi.algorithm import get_display
+
 
 st.set_page_config(
     page_title="Estimator - تخمینگر",
     page_icon=":bar_chart:",
     layout="wide"
 )
+
 
 st.markdown("""
     <style>
@@ -460,18 +448,6 @@ def do_laptop():
             st.write(user_df.head())
             
 
-def check(df):
-    l=[]
-    columns=df.columns
-    for col in columns:
-        dtypes=df[col].dtypes
-        nunique=df[col].nunique()
-        sum_null=df[col].isnull().sum()
-        l.append([col,dtypes,nunique,sum_null])
-    df_check=pd.DataFrame(l)
-    df_check.columns=['column','dtypes','nunique','sum_null']
-    return df_check 
-
 
 def do_estimation_iran():
     initialize_session_state() 
@@ -493,13 +469,14 @@ def do_estimation_iran():
         def format_func(value):
             return int(value)
         
-
-        
-        region_user = st.selectbox('طبقه ساختمانی که خانه در آن قرار دارد',
-                             sorted(region.unique()))
-        region_user_index = df1[region == region_user].index[0]
-        region_user_address = df1.at[region_user_index, 'address']
-        
+        bad_data_clone = bad_data.copy()
+        le=LabelEncoder()
+        bad_data_clone['address']= le.fit_transform(bad_data_clone['region'])
+        address_reverse_persian = list(np.unique(le.inverse_transform(bad_data_clone["address"])))
+        rgine = st.selectbox('طبقه ساختمانی که خانه در آن قرار دارد',
+                             sorted(address_reverse_persian))
+        rgine = bad_data_clone['address'].unique()[address_reverse_persian.index(rgine)]                             
+                             
         floor = st.selectbox('طبقه ساختمانی که خانه در آن قرار دارد',
                              sorted(clean_data['floor'].unique()),
                              format_func=format_func,
@@ -534,13 +511,13 @@ def do_estimation_iran():
         st.write(f'mean_absolute_error: {metrics.mean_absolute_error(y_test,y_pred_tree)}')
         
         
-        user_input = pd.DataFrame({
-            'address': [region_user_address],
-            'floor': [floor],
-            'area': [area],
-            'age': [age],
-            'rooms': [rooms],
-        })
+        # user_input = pd.DataFrame({
+        #     'address': [region_user_address],
+        #     'floor': [floor],
+        #     'area': [area],
+        #     'age': [age],
+        #     'rooms': [rooms],
+        # })
         
         # user_input.columns = X.columns
 
