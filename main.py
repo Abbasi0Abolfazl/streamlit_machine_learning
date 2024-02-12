@@ -458,7 +458,7 @@ def do_estimation_iran():
         st.session_state.prediction = True
         
     if st.session_state.prediction:
-        X = clean_data.drop(['rent','deposit'],axis=1)
+        X = clean_data.drop(['rent','deposit', 'all_to_deposit', 'district'],axis=1)
         Y = clean_data.pop('all_to_deposit')
 
         
@@ -475,7 +475,12 @@ def do_estimation_iran():
         address_reverse_persian = list(np.unique(le.inverse_transform(bad_data_clone["address"])))
         rgine = st.selectbox('طبقه ساختمانی که خانه در آن قرار دارد',
                              sorted(address_reverse_persian))
-        rgine = bad_data_clone['address'].unique()[address_reverse_persian.index(rgine)]                             
+        rgine = bad_data_clone['address'].unique()[address_reverse_persian.index(rgine)]  
+        
+        # TODO add district to predict
+        # area = st.selectbox('منطقه خانه ',
+        #                     sorted(clean_data['district'].unique()),
+        #                     format_func=format_func)                           
                              
         floor = st.selectbox('طبقه ساختمانی که خانه در آن قرار دارد',
                              sorted(clean_data['floor'].unique()),
@@ -511,35 +516,40 @@ def do_estimation_iran():
         st.write(f'mean_absolute_error: {metrics.mean_absolute_error(y_test,y_pred_tree)}')
         
         
-        # user_input = pd.DataFrame({
-        #     'address': [region_user_address],
-        #     'floor': [floor],
-        #     'area': [area],
-        #     'age': [age],
-        #     'rooms': [rooms],
-        # })
+        user_input = pd.DataFrame({
+            'floor': [floor],
+            'area': [area],
+            'age': [age],
+            'rooms': [rooms],
+            'elavator': [elavator],
+            'parking': [parking],
+            'Warehouse': [Warehouse],
+            'address': [rgine],
+        })
         
-        # user_input.columns = X.columns
-
-        # user_input_scaled = regression_tree_houses.transform(user_input)
-
-        # predicted_price = regression_tree_houses.predict(user_input_scaled)
-        # st.write(f'قیمت تخمینی لپ تاپ: {predicted_price[0]:,.2f} یورو')
         
-        # y_pred = regression_tree_houses.predict(X_test)
+        st.write(X.columns)
+        user_input.columns = X.columns
 
-        # mae = mean_absolute_error(y_test, y_pred)
-        # mse = mean_squared_error(y_test, y_pred)
-        # r2 = r2_score(y_test, y_pred)
+        user_input_scaled = regression_tree_houses.transform(user_input)
+
+        predicted_price = regression_tree_houses.predict(user_input_scaled)
+        st.write(f'قیمت تخمینی لپ تاپ: {predicted_price[0]:,.2f} یورو')
+        
+        y_pred = regression_tree_houses.predict(X_test)
+
+        mae = mean_absolute_error(y_test, y_pred)
+        mse = mean_squared_error(y_test, y_pred)
+        r2 = r2_score(y_test, y_pred)
 
         # نمایش معیارهای دقت
-        # st.write(f'خطای میانگین مطلق: {mae:,.2f} یورو')
-        # st.write(f'خطای میانگین مربعات: {mse:,.2f} یورو')
-        # st.write(f'{r2:.4f} : R-squared (R2) امتیاز ')
+        st.write(f'خطای میانگین مطلق: {mae:,.2f} یورو')
+        st.write(f'خطای میانگین مربعات: {mse:,.2f} یورو')
+        st.write(f'{r2:.4f} : R-squared (R2) امتیاز ')
 
-        # # محاسبه درصد دقت
-        # دقت_درصدی = regression_tree_houses.score(X_test, y_test) * 100
-        # st.write(f'{دقت_درصدی:.2f}% : دقت مدل ')
+        # محاسبه درصد دقت
+        دقت_درصدی = regression_tree_houses.score(X_test, y_test) * 100
+        st.write(f'{دقت_درصدی:.2f}% : دقت مدل ')
 
 
 
