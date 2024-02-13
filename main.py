@@ -647,98 +647,6 @@ def do_estimation_iran():
 </footer>
 """, unsafe_allow_html=True)
 
-
-def do_estimation_us():
-    initialize_session_state()
-    bad_data, clean_data = load_data('home_US')
-
-    if st.button('آپلود فایل'):
-        st.session_state.clicked = True
-
-    if st.session_state.clicked:
-        uploaded_file = upload_file()
-        if uploaded_file is not None:
-            st.session_state.remove = True
-            try:
-                user_df = pd.read_csv(uploaded_file)
-            except Exception as e:
-                st.error(f"این فایل قابل نمایش نیست به دلیل : {e}")
-                st.session_state.remove = False
-
-    if not st.session_state.remove:
-        col1, col2 = st.columns(2)
-
-        with col1:
-            st.markdown("<h3 style='color:red;direction: rtl;'>نمونه داده ناسالم(نامناسب برای یادگیری ماشین)</h3>",
-                        unsafe_allow_html=True)
-
-            st.write(bad_data.head())
-
-            show_chart_bad = st.checkbox("نمایش نمودار")
-
-            if show_chart_bad:
-                st.header("نمودار داده ناسالم")
-                column_name_bad = st.selectbox("ستون را مشخص کنید", list(bad_data.columns))
-
-                st.set_option('deprecation.showPyplotGlobalUse', False)
-                fig_bad, ax_bad = plt.subplots(figsize=(9, 7))
-
-                sns.countplot(x=column_name_bad, data=bad_data)
-
-                ax_bad.tick_params(axis='x', rotation=80)
-                st.pyplot(fig_bad)
-
-        with col2:
-            st.markdown("<h3 style='color:green;direction: rtl;'>نمونه داده سالم(پردازش شده)</h3>",
-                        unsafe_allow_html=True)
-            st.write(clean_data.head())
-
-            show_chart_clean = st.checkbox("نمایش نمودار داده صحیح")
-
-            if show_chart_clean:
-                st.header("نمودار داده صحیح")
-                column_name_clean = st.selectbox("ستون را مشخص کنید", list(clean_data.columns))
-
-                st.set_option('deprecation.showPyplotGlobalUse', False)
-                fig_clean, ax_clean = plt.subplots(figsize=(9, 7))
-
-                sns.countplot(x=column_name_clean, data=clean_data)
-
-                ax_clean.tick_params(axis='x', rotation=80)
-                st.pyplot(fig_clean)
-
-    if st.session_state.remove:
-        col1_U, col2_U = st.columns(2)
-
-        with col2_U:
-
-            st.markdown("<div class='custom-button'>", unsafe_allow_html=True)
-
-            if "show_other_chart" not in st.session_state:
-                st.session_state.show_other_chart = False
-
-            if st.button("پردازش"):
-                st.session_state.show_other_chart = True
-
-            if st.session_state.show_other_chart:
-                st.info(
-                    "این بخش به دلیل اینکه فایل بارگزاری شده آموزش مدل ها یادگیری ماشین ارتباط مستقیمی با داده های آموزش دیده دارد باید توسط ادمین مورد ارزیابی قرار بگیرد ")
-                st.info("شما می‌توانید برای دیدن نمودارهای بیشتر از فایل خود کلیک کنید")
-                with st.expander("نمایش نمودار"):
-                    show_other_chart(user_df)
-
-            else:
-                st.write("برای پردازش فایل بارگزاری شده خود لطفا بر روی دکمه 'پردازش' کلیک کنید")
-
-            st.markdown("</div>", unsafe_allow_html=True)
-
-        with col1_U:
-            st.markdown("<h3 style='color:blue;direction: rtl;'>داده بارگزاری شده توسط کاربر</h3>",
-                        unsafe_allow_html=True)
-
-            st.write(user_df.head())
-
-
 def do_about_us():
     st.markdown('### About Us')
 
@@ -747,7 +655,6 @@ menu = {
     'items': {
         'خانه': {'action': do_home, 'item_icon': 'house-door-fill', 'submenu': None},
         'تخمین قیمت لپ تاپ': {'action': do_laptop, 'item_icon': 'laptop-fill', 'submenu': None},
-        'تخمین قیمت خانهUS': {'action': do_estimation_us, 'item_icon': 'house-fill', 'submenu': None},
         'تخمین قیمت خانهIR': {'action': do_estimation_iran, 'item_icon': 'house-door-fill', 'submenu': None},
         'درباره ما': {'action': do_about_us, 'item_icon': 'info-circle-fill', 'submenu': None},
     },
