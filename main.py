@@ -1,13 +1,10 @@
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.preprocessing import StandardScaler
-from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.tree import DecisionTreeRegressor
 from streamlit_option_menu import option_menu
 from bidi.algorithm import get_display
-from sklearn import metrics
-from random import randint
 
 import matplotlib.pyplot as plt
 import streamlit as st
@@ -99,7 +96,7 @@ def do_home():
     <style>
         body {
             text-align: right;
-            font-size: 35px; /* افزایش اندازه متن */
+            font-size: 35px; 
             direction: rtl;
         }
         h1, h2 {
@@ -117,25 +114,23 @@ def do_home():
 <h1>Estimator - تخمینگر</h1>
 
 <h2>توضیحات</h2>
-<p>سایت "Estimator - تخمینگر" یک اپلیکیشن وب است که برای تخمین قیمت‌ها با استفاده از مدل‌های یادگیری ماشین ایجاد شده است. کاربران می‌توانند از این سایت برای تخمین قیمت لپ تاپ، خانه در ایالات متحده، خانه در ایران، و همچنین بازار سهام استفاده کنند.</p>
+<p>سایت "Estimator - تخمینگر" یک اپلیکیشن وب است که برای تخمین قیمت‌ها با استفاده از مدل‌های یادگیری ماشین ایجاد شده است. کاربران می‌توانند از این سایت برای تخمین قیمت لپ تاپ  و همچنین  خانه در ایران استفاده کنند.</p>
 
 <h2>استفاده از فایل CSV</h2>
-<p>برای آموزش مدل‌های یادگیری ماشین، از یک فایل CSV به نام "training_data.csv" استفاده شده است. این فایل حاوی داده‌های آموزشی است که بر اساس آن مدل‌های یادگیری ماشین ساخته شده‌اند. کاربران می‌توانند مشاهده را کلیک کنند تا فایل را مشاهده کرده و در صورت نیاز، فایل خود را بارگیری کنند.</p>
+<p>برای آموزش مدل‌های یادگیری ماشین، از فایل CSV  که توسط سایت "kaggel" .مع آوری شده استفاده شده است. این فایل حاوی داده‌های آموزشی است که بر اساس آن مدل‌های یادگیری ماشین ساخته شده‌اند. کاربران می‌توانند  فایل را مشاهده کرده و در صورت نیاز، فایل خود را بارگیری کنند</p>
 
 <h2>تخمین‌های ممکن</h2>
-<p>سایت امکان تخمین قیمت برای چهار دسته اصلی را فراهم می‌کند:</p>
+<p>سایت امکان تخمین قیمت برای دو دسته اصلی را فراهم می‌کند:</p>
 <ol>
     <li><strong>تخمین قیمت لپ تاپ</strong></li>
-    <li><strong>تخمین قیمت خانه در ایالات متحده</strong></li>
     <li><strong>تخمین قیمت خانه در ایران</strong></li>
-    <li><strong>تخمین قیمت بازار سهام</strong></li>
 </ol>
 
 <h2>نحوه استفاده</h2>
 <p>برای استفاده از سایت، کاربران مراحل زیر را انجام می‌دهند:</p>
 <ol>
     <li>اگر تمایل دارند، فایل CSV آموزشی را و یا فایل خود را بارگیری می‌کنند.</li>
-    <li>برای هر قسمت از تخمین (لپ تاپ، خانه در ایالات متحده، خانه در ایران یا بازار سهام)، ویژگی‌های مورد نظر را وارد می‌کنند.</li>
+    <li>برای هر قسمت از تخمین (لپ تاپ، خانه در ایران)، ویژگی‌های مورد نظر را وارد می‌کنند.</li>
     <li>سپس، سایت براساس ویژگی‌های وارد شده، قیمت تخمین زده شده توسط مدل یادگیری ماشین را اعلام می‌کند.</li>
 </ol>
 
@@ -359,7 +354,12 @@ def do_laptop():
         user_input_scaled = scaler.transform(user_input)
 
         predicted_price = forest.predict(user_input_scaled)
-        st.write(f'قیمت تخمینی لپ تاپ: {predicted_price[0]:,.2f} یورو')
+        eur_to_toman_rate = 59850
+        predicted_price_in_eur = predicted_price[0]  
+        predicted_price_in_toman = predicted_price_in_eur * eur_to_toman_rate
+        st.info(f'قیمت تخمینی لپ تاپ: {predicted_price_in_toman:,.2f} تومان')
+
+        st.info(f'قیمت تخمینی لپ تاپ: {predicted_price[0]:,.2f} یورو')
 
         y_pred = forest.predict(x_test_scaled)
 
@@ -367,12 +367,12 @@ def do_laptop():
         mse = mean_squared_error(y_test, y_pred)
         r2 = r2_score(y_test, y_pred)
 
-        st.write(f'خطای میانگین مطلق: {mae:,.2f} یورو')
-        st.write(f'خطای میانگین مربعات: {mse:,.2f} یورو')
-        st.write(f'{r2:.4f} : R-squared (R2) امتیاز ')
+        st.info(f'خطای میانگین مطلق: {mae:,.2f}')
+        st.info(f'خطای میانگین مربعات: {mse:,.2f}')
+        st.info(f'ضریب تعیین امتیاز : {r2:.4f}')
 
         percentage_accuracy = forest.score(x_test_scaled, y_test) * 100
-        st.write(f'{percentage_accuracy:.2f}% : دقت مدل ')
+        st.info(f'دقت مدل : {percentage_accuracy:.2f}% ')
 
     if st.button('آپلود فایل'):
         st.session_state.clicked = True
@@ -459,12 +459,6 @@ def do_laptop():
                         unsafe_allow_html=True)
 
             st.write(user_df.head())
-
-    st.markdown("""
-    <footer>
-    تمامی حقوق مادی و معنوی این سایت متعلق به ابوالفضل عباسی است.
-    </footer>
-""", unsafe_allow_html=True)
 
 
 def do_estimation_iran():
@@ -537,7 +531,7 @@ def do_estimation_iran():
         user_input.columns = X.columns
 
         predicted_price = regression_tree_houses.predict(user_input)
-        st.write(f'قیمت تخمینی خانه: {predicted_price[0] * 1000:,.2f} ')
+        st.info(f'قیمت تخمینی خانه: {predicted_price[0] * 1000:,.2f} ')
 
         y_pred = regression_tree_houses.predict(X_test)
 
@@ -545,16 +539,16 @@ def do_estimation_iran():
         mse = mean_squared_error(y_test, y_pred)
         r2 = r2_score(y_test, y_pred)
 
-        st.write(
-            f'خطای میانگین مطلق: {mae:,.2f} . این معیار، میانگین اختلاف میان قیمت‌های پیش‌بینی شده و واقعی را نشان می‌دهد.')
-        st.write(
-            f'خطای میانگین مربعات: {mse:,.2f} یورو. این معیار، میانگین مربعات اختلاف میان قیمت‌های پیش‌بینی شده و واقعی را نشان می‌دهد.')
-        st.write(f'{r2:.4f} : امتیاز. این معیار، میزان توضیح داده شده توسط مدل نسبت به داده‌ها را نشان می‌دهد.')
+        st.info(
+            f'خطای میانگین مطلق: {mae:,.2f}')
+        st.info(
+            f'خطای میانگین مربعات: {mse:,.2f}')
+        st.info(f'ضریب تعیین امتیاز : {r2:.4f}')
+        
 
-        دقت_درصدی = regression_tree_houses.score(X_test, y_test) * 100
-        st.write(
-            f'{دقت_درصدی:.2f}% : دقت مدل. این معیار، درصد داده‌هایی که مدل به درستی پیش‌بینی کرده است نسبت به کل داده‌های تست را نشان می‌دهد.')
-
+        percentage_accuracy = regression_tree_houses.score(X_test, y_test) * 100
+        st.info(f'دقت مدل : {percentage_accuracy:.2f}% ')
+        
     if st.button('آپلود فایل'):
         st.session_state.clicked = True
 
@@ -641,14 +635,67 @@ def do_estimation_iran():
 
             st.write(user_df.head())
 
-    st.markdown("""
-<footer>
-    تمامی حقوق مادی و معنوی این سایت متعلق به ابوالفضل عباسی است.
-</footer>
-""", unsafe_allow_html=True)
 
 def do_about_us():
-    st.markdown('### About Us')
+        st.markdown("""
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estimator - تخمینگر</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            direction: rtl;
+            text-align: justify;
+            padding: 20px;
+        }
+
+        h2 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        p {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        ul li::before {
+            content: "•";
+            color: #ff6600;
+            display: inline-block;
+            width: 1em;
+            margin-left: -1em;
+        }
+
+    </style>
+</head>
+<body>
+    <h2>Estimator - تخمینگر</h2>
+    <p><strong>توضیحات:</strong> این اپلیکیشن وب به نام "Estimator - تخمینگر" برای تخمین قیمت‌ها با استفاده از مدل‌های یادگیری ماشین طراحی شده است. کاربران می‌توانند از این اپلیکیشن برای تخمین قیمت لپ تاپ و همچنین خانه در ایران استفاده کنند.</p>
+    <p><strong>استفاده از فایل CSV:</strong> برای آموزش مدل‌های یادگیری ماشین، از یک فایل CSV استفاده شده است این فایل توسط سایت "kaggel" جمع آوری شده که داده‌های آموزشی را شامل می‌شود.</p>
+    <p><strong>نحوه استفاده:</strong> برای استفاده از سایت، کاربران باید مراحل زیر را انجام دهند:</p>
+    <ol>
+        <li>اگر تمایل دارند، فایل CSV آموزشی را و یا فایل خود را بارگیری می‌کنند.</li>
+        <li>برای هر قسمت از تخمین (لپ تاپ، خانه در ایران)، ویژگی‌های مورد نظر را وارد می‌کنند.</li>
+        <li>سپس، سایت براساس ویژگی‌های وارد شده، قیمت تخمین زده شده توسط مدل یادگیری ماشین را اعلام می‌کند.</li>
+    </ol>
+    <p><strong>اجزای پروژه:</strong> پروژه از Streamlit برای ساخت این اپلیکیشن وب استفاده کرده است. همچنین از مدل‌های یادگیری ماشین بر اساس داده‌های آموزشی بهینه‌سازی شده‌اند. هدف این سایت ارائه یک ابزار کاربردی برای تخمین قیمت محصولات و دارایی‌ها با استفاده از یادگیری ماشین است. این سایت برای کاربرانی طراحی شده است که می‌خواهند قیمت محصولات و دارایی‌ها را بدون نیاز به داشتن دانش تخصصی در زمینه یادگیری ماشین تخمین بزنند.</p>
+    <p class="highlight"><strong>برنامه‌نویس:</strong> این برنامه توسط ابوالفضل عباسی ساخته شده است.</p>
+</body>
+</html>
+
+
+
+""", unsafe_allow_html=True)
 
 
 menu = {
