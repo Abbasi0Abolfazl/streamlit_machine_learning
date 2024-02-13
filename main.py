@@ -9,7 +9,6 @@ from bidi.algorithm import get_display
 from sklearn import metrics
 from random import randint
 
-
 import matplotlib.pyplot as plt
 import streamlit as st
 import arabic_reshaper
@@ -17,14 +16,11 @@ import seaborn as sns
 import pandas as pd
 import numpy as np
 
-
-
 st.set_page_config(
     page_title="Estimator - تخمینگر",
     page_icon=":bar_chart:",
     layout="wide"
 )
-
 
 st.markdown("""
     <style>
@@ -88,7 +84,6 @@ st.markdown("""
     </style>
 
 """, unsafe_allow_html=True)
-    
 
 
 def do_home():
@@ -154,8 +149,7 @@ def do_home():
 
 
 """, unsafe_allow_html=True)
-    
-    
+
 
 def chart_to_base64(plt_chart):
     """
@@ -177,10 +171,11 @@ def upload_file():
     uploaded_file = st.file_uploader("", type=["csv", 'xlsx'])
     return uploaded_file
 
-        
+
 def count_empty_values(df):
     empty_values = df.isnull().sum()
     return empty_values
+
 
 def count_text_values(df):
     text_columns = df.select_dtypes(include=['object']).columns
@@ -188,14 +183,16 @@ def count_text_values(df):
     text_empty_counts = text_empty_values.sum()
     return text_empty_counts
 
+
 def plot_bad_data_chart(df):
     text_empty_counts = count_text_values(df)
     plt.bar(text_empty_counts.index, text_empty_counts.values)
-    plt.xlabel(get_display(arabic_reshaper.reshape('ستون‌ها')))  
+    plt.xlabel(get_display(arabic_reshaper.reshape('ستون‌ها')))
     plt.ylabel(get_display(arabic_reshaper.reshape('تعداد داده‌های خالی')))
     plt.title(get_display(arabic_reshaper.reshape('نمودار داده خراب')))
-    plt.xticks(rotation=45) 
+    plt.xticks(rotation=45)
     st.pyplot()
+
 
 def plot_correlation_heatmap(df):
     numeric_df = df.select_dtypes(include=[np.number])
@@ -213,45 +210,45 @@ def plot_correlation_heatmap(df):
     except Exception as e:
         st.warning("نمایش نمودار به دلیل مشکلات فنی امکانپذیر نیست. دلیل: ", e)
 
+
 def show_other_chart(user_df):
-    
     show_chart_U = st.checkbox("نمایش نمودار")
     if show_chart_U:
         column_name_U = st.selectbox("", list(user_df.columns))
 
-        st.set_option('deprecation.showPyplotGlobalUse', False)  
+        st.set_option('deprecation.showPyplotGlobalUse', False)
         fig_u, ax_u = plt.subplots(figsize=(9, 7))
 
         sns.countplot(x=column_name_U, data=user_df)
 
         ax_u.tick_params(axis='x', rotation=90)
         st.pyplot(fig_u)
-        
-        
+
     show_empty_values = st.checkbox("نمایش تعداد داده‌های خالی")
 
     if show_empty_values:
         empty_values = count_empty_values(user_df)
         st.bar_chart(empty_values)
         # st.write(empty_values)
-            
+
     show_heatmap = st.checkbox("نمایش نمودار هیت‌مپ ماتریس همبستگی")
-        
+
     if show_heatmap:
         plot_correlation_heatmap(user_df)
-        
+
     show_bad_data = st.checkbox("نمودار داده خراب")
     if show_bad_data:
         plot_bad_data_chart(user_df)
 
+
 def load_data(type_data):
     clean_data = pd.read_csv(f"CSV_data\\clean_data_{type_data}.csv", encoding='latin1')
-    
+
     if type_data == 'home_IR':
         bad_data = pd.read_csv(f"CSV_data\\bad_data_{type_data}.csv")
     else:
         bad_data = pd.read_csv(f"CSV_data\\bad_data_{type_data}.csv", encoding='latin1')
-        
+
     return bad_data, clean_data
 
 
@@ -268,14 +265,12 @@ def initialize_session_state():
 
 
 def do_laptop():
-        
-        
-    initialize_session_state() 
+    initialize_session_state()
     bad_data, clean_data = load_data('laptop')
 
     if st.button("تخمین قیمت "):
         st.session_state.prediction = True
-        
+
     if st.session_state.prediction:
         x = clean_data.drop('Price_euros', axis=1)
         y = clean_data['Price_euros']
@@ -286,18 +281,17 @@ def do_laptop():
 
         forest = RandomForestRegressor()
         forest.fit(x_train_scaled, y_train)
-        
+
         os_category = st.selectbox('نوع سیستم عامل', ['Windows', 'Linux', 'No OS'])
         company_category = st.selectbox('شرکت سازنده لپ تاپ', ['Acer', 'Razer', 'MSI'])
         windows_selected = 1 if os_category == 'Windows' else 0
         linux_selected = 1 if os_category == 'Linux' else 0
         no_os_selected = 1 if os_category == 'No OS' else 0
-        
-        
+
         cpu_category = st.selectbox('شرکت سازنده پردازنده', ['ADM', 'Intel'])
         gpu_category = st.selectbox('شرکت سازنده کارت گرافیک', ['NVIDIA', 'Intel', 'ADM'])
-        laptop_type = st.selectbox('نوع لپ تاپ', ['Workstation','Ultrabook','Gaming','Notebook'])
-        
+        laptop_type = st.selectbox('نوع لپ تاپ', ['Workstation', 'Ultrabook', 'Gaming', 'Notebook'])
+
         acer_selected = razer_selected = msi_selected = 0
         amd_selected = intel_selected = 0
         nvidia_selected = intel_gpu_selected = amd_gpu_selected = 0
@@ -330,15 +324,13 @@ def do_laptop():
             gaming_selected = 1
         elif laptop_type == 'Notebook':
             notebook_selected = 1
-        
-        
+
         weight = st.selectbox('وزن', [1.37, 1.83, 1.37])
         screen_height = st.selectbox('ارتفاع صفحه نمایش (پیکسل)', sorted(clean_data['Screen Height'].unique()))
         screen_width = st.selectbox('عرض صفحه (پیکسل)', sorted(clean_data['Screen Width'].unique()))
         ram = st.selectbox('رم (GB)', sorted(clean_data['Ram'].unique()))
         cpu_frequency = st.selectbox('CPU فرکانس (GHz)', [1.8, 3.1, 2.3])
-        
-        
+
         user_input = pd.DataFrame({
             'Windows': [windows_selected],
             'Linux': [linux_selected],
@@ -361,29 +353,26 @@ def do_laptop():
             'Screen Width (Pixels)': [screen_width],
             'Ram (GB)': [ram]
         })
-        
+
         user_input.columns = x.columns
 
         user_input_scaled = scaler.transform(user_input)
 
         predicted_price = forest.predict(user_input_scaled)
         st.write(f'قیمت تخمینی لپ تاپ: {predicted_price[0]:,.2f} یورو')
-        
+
         y_pred = forest.predict(x_test_scaled)
 
         mae = mean_absolute_error(y_test, y_pred)
         mse = mean_squared_error(y_test, y_pred)
         r2 = r2_score(y_test, y_pred)
 
-        # نمایش معیارهای دقت
         st.write(f'خطای میانگین مطلق: {mae:,.2f} یورو')
         st.write(f'خطای میانگین مربعات: {mse:,.2f} یورو')
         st.write(f'{r2:.4f} : R-squared (R2) امتیاز ')
 
-        # محاسبه درصد دقت
-        دقت_درصدی = forest.score(x_test_scaled, y_test) * 100
-        st.write(f'{دقت_درصدی:.2f}% : دقت مدل ')
-
+        percentage_accuracy = forest.score(x_test_scaled, y_test) * 100
+        st.write(f'{percentage_accuracy:.2f}% : دقت مدل ')
 
     if st.button('آپلود فایل'):
         st.session_state.clicked = True
@@ -394,60 +383,57 @@ def do_laptop():
             st.session_state.remove = True
             try:
                 user_df = pd.read_csv(uploaded_file)
-            except Exception as  e:
+            except Exception as e:
                 st.error(f"این فایل قابل نمایش نیست به دلیل : {e}")
                 st.session_state.remove = False
-                
-
 
     if not st.session_state.remove:
         col1, col2 = st.columns(2)
-        
+
         with col1:
-            st.markdown("<h3 style='color:red;direction: rtl;'>نمونه داده ناسالم(نامناسب برای یادگیری ماشین)</h3>", unsafe_allow_html=True)
-            
+            st.markdown("<h3 style='color:red;direction: rtl;'>نمونه داده ناسالم(نامناسب برای یادگیری ماشین)</h3>",
+                        unsafe_allow_html=True)
+
             st.write(bad_data.head())
 
             show_chart_bad = st.checkbox("نمایش نمودار")
-            
+
             if show_chart_bad:
                 st.header("نمودار داده ناسالم")
                 column_name_bad = st.selectbox("ستون را مشخص کنید", list(bad_data.columns))
-                
-                st.set_option('deprecation.showPyplotGlobalUse', False)  
+
+                st.set_option('deprecation.showPyplotGlobalUse', False)
                 fig_bad, ax_bad = plt.subplots(figsize=(9, 7))
-                
+
                 sns.countplot(x=column_name_bad, data=bad_data)
 
                 ax_bad.tick_params(axis='x', rotation=80)
                 st.pyplot(fig_bad)
 
         with col2:
-            st.markdown("<h3 style='color:green;direction: rtl;'>نمونه داده سالم(پردازش شده)</h3>", unsafe_allow_html=True)        
+            st.markdown("<h3 style='color:green;direction: rtl;'>نمونه داده سالم(پردازش شده)</h3>",
+                        unsafe_allow_html=True)
             st.write(clean_data.head())
 
             show_chart_clean = st.checkbox("نمایش نمودار داده صحیح")
-            
+
             if show_chart_clean:
                 st.header("نمودار داده صحیح")
                 column_name_clean = st.selectbox("ستون را مشخص کنید", list(clean_data.columns))
-                
-                st.set_option('deprecation.showPyplotGlobalUse', False)  
+
+                st.set_option('deprecation.showPyplotGlobalUse', False)
                 fig_clean, ax_clean = plt.subplots(figsize=(9, 7))
-                
+
                 sns.countplot(x=column_name_clean, data=clean_data)
 
                 ax_clean.tick_params(axis='x', rotation=80)
                 st.pyplot(fig_clean)
-                
-                
+
     if st.session_state.remove:
         col1_U, col2_U = st.columns(2)
 
         with col2_U:
-            
-            
-            
+
             st.markdown("<div class='custom-button'>", unsafe_allow_html=True)
 
             if "show_other_chart" not in st.session_state:
@@ -457,87 +443,84 @@ def do_laptop():
                 st.session_state.show_other_chart = True
 
             if st.session_state.show_other_chart:
-                st.info("این بخش به دلیل اینکه فایل بارگزاری شده آموزش مدل ها یادگیری ماشین ارتباط مستقیمی با داده های آموزش دیده دارد باید توسط ادمین مورد ارزیابی قرار بگیرد ")
+                st.info(
+                    "این بخش به دلیل اینکه فایل بارگزاری شده آموزش مدل ها یادگیری ماشین ارتباط مستقیمی با داده های آموزش دیده دارد باید توسط ادمین مورد ارزیابی قرار بگیرد ")
                 st.info("شما می‌توانید برای دیدن نمودارهای بیشتر از فایل خود کلیک کنید")
                 with st.expander("نمایش نمودار"):
                     show_other_chart(user_df)
-                    
+
             else:
                 st.write("برای پردازش فایل بارگزاری شده خود لطفا بر روی دکمه 'پردازش' کلیک کنید")
 
             st.markdown("</div>", unsafe_allow_html=True)
 
-
-
         with col1_U:
-            st.markdown("<h3 style='color:blue;direction: rtl;'>داده بارگزاری شده توسط کاربر</h3>", unsafe_allow_html=True)
+            st.markdown("<h3 style='color:blue;direction: rtl;'>داده بارگزاری شده توسط کاربر</h3>",
+                        unsafe_allow_html=True)
 
             st.write(user_df.head())
-            
+
     st.markdown("""
     <footer>
     تمامی حقوق مادی و معنوی این سایت متعلق به ابوالفضل عباسی است.
     </footer>
 """, unsafe_allow_html=True)
-            
 
 
 def do_estimation_iran():
-    initialize_session_state() 
+    initialize_session_state()
     bad_data, clean_data = load_data('home_IR')
-    
-    
+
     if st.button("تخمین قیمت "):
         st.session_state.prediction = True
-        
+
     if st.session_state.prediction:
-        X = clean_data.drop(['all_to_deposit', 'district'],axis=1)
+        X = clean_data.drop(['all_to_deposit', 'district'], axis=1)
         Y = clean_data.pop('all_to_deposit')
 
-        
         regression_tree_houses = DecisionTreeRegressor()
 
-        X_train,X_test,y_train,y_test=train_test_split(X,Y,test_size=0.4,random_state=0)
+        X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.4, random_state=0)
         regression_tree_houses.fit(X_train, y_train)
+
         def format_func(value):
             return int(value)
-        
+
         bad_data_clone = bad_data.copy()
-        le=LabelEncoder()
-        bad_data_clone['address']= le.fit_transform(bad_data_clone['region'])
+        le = LabelEncoder()
+        bad_data_clone['address'] = le.fit_transform(bad_data_clone['region'])
         address_reverse_persian = list(np.unique(le.inverse_transform(bad_data_clone["address"])))
         rgine = st.selectbox('محلی که خانه در آن وجوود دارد',
                              sorted(address_reverse_persian))
-        rgine = bad_data_clone['address'].unique()[address_reverse_persian.index(rgine)]   
+        rgine = bad_data_clone['address'].unique()[address_reverse_persian.index(rgine)]
 
-                             
         floor = st.selectbox('طبقه ساختمانی که خانه در آن قرار دارد',
                              sorted(clean_data['floor'].unique()),
                              format_func=format_func,
                              help='عدد 0 نشان دهنده طبقه همکف است')
-        
+
         area = st.selectbox('مساحت خانه براساس متر مربع',
                             sorted(clean_data['area'].unique()),
                             format_func=format_func)
-        
+
         age = st.selectbox('سن خانه(چند سال از ساخت خانه میگذرد )',
                            sorted(clean_data['age'].unique()),
                            format_func=format_func,
                            help='عدد 0 نشان دهنده این است که سن این خانه هنوز به یکسال هم نرسیده است')
-        
+
         rooms = st.selectbox('تعداد اتاق های خانه',
-                            sorted(clean_data['rooms'].unique()),
-                            format_func=format_func)
-        
+                             sorted(clean_data['rooms'].unique()),
+                             format_func=format_func)
+
         elavator = st.selectbox('وجود آسانسور در خانه', ['وجود دارد ', 'وجود ندارد'])
         elavator = 1 if elavator == 'وجود دارد ' else 0
 
         parking = st.selectbox('وجود پارکینگ در خانه', ['وجود دارد ', 'وجود ندارد'])
         parking = 1 if parking == 'وجود دارد ' else 0
-        
+
         Warehouse = st.selectbox('وجود انبار در خانه', ['وجود دارد ', 'وجود ندارد'], )
         Warehouse = 1 if Warehouse == 'وجود دارد ' else 0
-        
+
         user_input = pd.DataFrame({
             'floor': [floor],
             'area': [area],
@@ -550,26 +533,27 @@ def do_estimation_iran():
             'rent': [clean_data['rent'].median()],
             'deposit': [clean_data['deposit'].median()],
         })
-        
-        
+
         user_input.columns = X.columns
 
         predicted_price = regression_tree_houses.predict(user_input)
-        st.write(f'قیمت تخمینی خانه: {predicted_price[0]*1000:,.2f} ')
-        
+        st.write(f'قیمت تخمینی خانه: {predicted_price[0] * 1000:,.2f} ')
+
         y_pred = regression_tree_houses.predict(X_test)
 
         mae = mean_absolute_error(y_test, y_pred)
         mse = mean_squared_error(y_test, y_pred)
         r2 = r2_score(y_test, y_pred)
 
-        st.write(f'خطای میانگین مطلق: {mae:,.2f} . این معیار، میانگین اختلاف میان قیمت‌های پیش‌بینی شده و واقعی را نشان می‌دهد.')
-        st.write(f'خطای میانگین مربعات: {mse:,.2f} یورو. این معیار، میانگین مربعات اختلاف میان قیمت‌های پیش‌بینی شده و واقعی را نشان می‌دهد.')
+        st.write(
+            f'خطای میانگین مطلق: {mae:,.2f} . این معیار، میانگین اختلاف میان قیمت‌های پیش‌بینی شده و واقعی را نشان می‌دهد.')
+        st.write(
+            f'خطای میانگین مربعات: {mse:,.2f} یورو. این معیار، میانگین مربعات اختلاف میان قیمت‌های پیش‌بینی شده و واقعی را نشان می‌دهد.')
         st.write(f'{r2:.4f} : امتیاز. این معیار، میزان توضیح داده شده توسط مدل نسبت به داده‌ها را نشان می‌دهد.')
 
         دقت_درصدی = regression_tree_houses.score(X_test, y_test) * 100
-        st.write(f'{دقت_درصدی:.2f}% : دقت مدل. این معیار، درصد داده‌هایی که مدل به درستی پیش‌بینی کرده است نسبت به کل داده‌های تست را نشان می‌دهد.')
-
+        st.write(
+            f'{دقت_درصدی:.2f}% : دقت مدل. این معیار، درصد داده‌هایی که مدل به درستی پیش‌بینی کرده است نسبت به کل داده‌های تست را نشان می‌دهد.')
 
     if st.button('آپلود فایل'):
         st.session_state.clicked = True
@@ -580,58 +564,57 @@ def do_estimation_iran():
             st.session_state.remove = True
             try:
                 user_df = pd.read_csv(uploaded_file)
-            except Exception as  e:
+            except Exception as e:
                 st.error(f"این فایل قابل نمایش نیست به دلیل : {e}")
                 st.session_state.remove = False
-                
+
     if not st.session_state.remove:
         col1, col2 = st.columns(2)
-        
+
         with col1:
-            st.markdown("<h3 style='color:red;direction: rtl;'>نمونه داده ناسالم(نامناسب برای یادگیری ماشین)</h3>", unsafe_allow_html=True)
-            
+            st.markdown("<h3 style='color:red;direction: rtl;'>نمونه داده ناسالم(نامناسب برای یادگیری ماشین)</h3>",
+                        unsafe_allow_html=True)
+
             st.write(bad_data.head())
 
             show_chart_bad = st.checkbox("نمایش نمودار")
-            
+
             if show_chart_bad:
                 st.header("نمودار داده ناسالم")
                 column_name_bad = st.selectbox("ستون را مشخص کنید", list(bad_data.columns))
-                
-                st.set_option('deprecation.showPyplotGlobalUse', False)  
+
+                st.set_option('deprecation.showPyplotGlobalUse', False)
                 fig_bad, ax_bad = plt.subplots(figsize=(9, 7))
-                
+
                 sns.countplot(x=column_name_bad, data=bad_data)
 
                 ax_bad.tick_params(axis='x', rotation=80)
                 st.pyplot(fig_bad)
 
         with col2:
-            st.markdown("<h3 style='color:green;direction: rtl;'>نمونه داده سالم(پردازش شده)</h3>", unsafe_allow_html=True)        
+            st.markdown("<h3 style='color:green;direction: rtl;'>نمونه داده سالم(پردازش شده)</h3>",
+                        unsafe_allow_html=True)
             st.write(clean_data.head())
 
             show_chart_clean = st.checkbox("نمایش نمودار داده صحیح")
-            
+
             if show_chart_clean:
                 st.header("نمودار داده صحیح")
                 column_name_clean = st.selectbox("ستون را مشخص کنید", list(clean_data.columns))
-                
-                st.set_option('deprecation.showPyplotGlobalUse', False)  
+
+                st.set_option('deprecation.showPyplotGlobalUse', False)
                 fig_clean, ax_clean = plt.subplots(figsize=(9, 7))
-                
+
                 sns.countplot(x=column_name_clean, data=clean_data)
 
                 ax_clean.tick_params(axis='x', rotation=80)
                 st.pyplot(fig_clean)
-                
-                
+
     if st.session_state.remove:
         col1_U, col2_U = st.columns(2)
 
         with col2_U:
-            
-            
-            
+
             st.markdown("<div class='custom-button'>", unsafe_allow_html=True)
 
             if "show_other_chart" not in st.session_state:
@@ -641,35 +624,34 @@ def do_estimation_iran():
                 st.session_state.show_other_chart = True
 
             if st.session_state.show_other_chart:
-                st.info("این بخش به دلیل اینکه فایل بارگزاری شده آموزش مدل ها یادگیری ماشین ارتباط مستقیمی با داده های آموزش دیده دارد باید توسط ادمین مورد ارزیابی قرار بگیرد ")
+                st.info(
+                    "این بخش به دلیل اینکه فایل بارگزاری شده آموزش مدل ها یادگیری ماشین ارتباط مستقیمی با داده های آموزش دیده دارد باید توسط ادمین مورد ارزیابی قرار بگیرد ")
                 st.info("شما می‌توانید برای دیدن نمودارهای بیشتر از فایل خود کلیک کنید")
                 with st.expander("نمایش نمودار"):
                     show_other_chart(user_df)
-                    
+
             else:
                 st.write("برای پردازش فایل بارگزاری شده خود لطفا بر روی دکمه 'پردازش' کلیک کنید")
 
             st.markdown("</div>", unsafe_allow_html=True)
 
-
-
         with col1_U:
-            st.markdown("<h3 style='color:blue;direction: rtl;'>داده بارگزاری شده توسط کاربر</h3>", unsafe_allow_html=True)
+            st.markdown("<h3 style='color:blue;direction: rtl;'>داده بارگزاری شده توسط کاربر</h3>",
+                        unsafe_allow_html=True)
 
             st.write(user_df.head())
-            
+
     st.markdown("""
 <footer>
     تمامی حقوق مادی و معنوی این سایت متعلق به ابوالفضل عباسی است.
 </footer>
 """, unsafe_allow_html=True)
-            
-            
+
 
 def do_estimation_us():
-    initialize_session_state() 
+    initialize_session_state()
     bad_data, clean_data = load_data('home_US')
-    
+
     if st.button('آپلود فایل'):
         st.session_state.clicked = True
 
@@ -679,60 +661,57 @@ def do_estimation_us():
             st.session_state.remove = True
             try:
                 user_df = pd.read_csv(uploaded_file)
-            except Exception as  e:
+            except Exception as e:
                 st.error(f"این فایل قابل نمایش نیست به دلیل : {e}")
                 st.session_state.remove = False
-                
-
 
     if not st.session_state.remove:
         col1, col2 = st.columns(2)
-        
+
         with col1:
-            st.markdown("<h3 style='color:red;direction: rtl;'>نمونه داده ناسالم(نامناسب برای یادگیری ماشین)</h3>", unsafe_allow_html=True)
-            
+            st.markdown("<h3 style='color:red;direction: rtl;'>نمونه داده ناسالم(نامناسب برای یادگیری ماشین)</h3>",
+                        unsafe_allow_html=True)
+
             st.write(bad_data.head())
 
             show_chart_bad = st.checkbox("نمایش نمودار")
-            
+
             if show_chart_bad:
                 st.header("نمودار داده ناسالم")
                 column_name_bad = st.selectbox("ستون را مشخص کنید", list(bad_data.columns))
-                
-                st.set_option('deprecation.showPyplotGlobalUse', False)  
+
+                st.set_option('deprecation.showPyplotGlobalUse', False)
                 fig_bad, ax_bad = plt.subplots(figsize=(9, 7))
-                
+
                 sns.countplot(x=column_name_bad, data=bad_data)
 
                 ax_bad.tick_params(axis='x', rotation=80)
                 st.pyplot(fig_bad)
 
         with col2:
-            st.markdown("<h3 style='color:green;direction: rtl;'>نمونه داده سالم(پردازش شده)</h3>", unsafe_allow_html=True)        
+            st.markdown("<h3 style='color:green;direction: rtl;'>نمونه داده سالم(پردازش شده)</h3>",
+                        unsafe_allow_html=True)
             st.write(clean_data.head())
 
             show_chart_clean = st.checkbox("نمایش نمودار داده صحیح")
-            
+
             if show_chart_clean:
                 st.header("نمودار داده صحیح")
                 column_name_clean = st.selectbox("ستون را مشخص کنید", list(clean_data.columns))
-                
-                st.set_option('deprecation.showPyplotGlobalUse', False)  
+
+                st.set_option('deprecation.showPyplotGlobalUse', False)
                 fig_clean, ax_clean = plt.subplots(figsize=(9, 7))
-                
+
                 sns.countplot(x=column_name_clean, data=clean_data)
 
                 ax_clean.tick_params(axis='x', rotation=80)
                 st.pyplot(fig_clean)
-                
-                
+
     if st.session_state.remove:
         col1_U, col2_U = st.columns(2)
 
         with col2_U:
-            
-            
-            
+
             st.markdown("<div class='custom-button'>", unsafe_allow_html=True)
 
             if "show_other_chart" not in st.session_state:
@@ -742,20 +721,20 @@ def do_estimation_us():
                 st.session_state.show_other_chart = True
 
             if st.session_state.show_other_chart:
-                st.info("این بخش به دلیل اینکه فایل بارگزاری شده آموزش مدل ها یادگیری ماشین ارتباط مستقیمی با داده های آموزش دیده دارد باید توسط ادمین مورد ارزیابی قرار بگیرد ")
+                st.info(
+                    "این بخش به دلیل اینکه فایل بارگزاری شده آموزش مدل ها یادگیری ماشین ارتباط مستقیمی با داده های آموزش دیده دارد باید توسط ادمین مورد ارزیابی قرار بگیرد ")
                 st.info("شما می‌توانید برای دیدن نمودارهای بیشتر از فایل خود کلیک کنید")
                 with st.expander("نمایش نمودار"):
                     show_other_chart(user_df)
-                    
+
             else:
                 st.write("برای پردازش فایل بارگزاری شده خود لطفا بر روی دکمه 'پردازش' کلیک کنید")
 
             st.markdown("</div>", unsafe_allow_html=True)
 
-
-
         with col1_U:
-            st.markdown("<h3 style='color:blue;direction: rtl;'>داده بارگزاری شده توسط کاربر</h3>", unsafe_allow_html=True)
+            st.markdown("<h3 style='color:blue;direction: rtl;'>داده بارگزاری شده توسط کاربر</h3>",
+                        unsafe_allow_html=True)
 
             st.write(user_df.head())
 
@@ -763,25 +742,30 @@ def do_estimation_us():
 def do_about_us():
     st.markdown('### About Us')
 
+
 menu = {
-    'items': { 
+    'items': {
         'خانه': {'action': do_home, 'item_icon': 'house-door-fill', 'submenu': None},
         'تخمین قیمت لپ تاپ': {'action': do_laptop, 'item_icon': 'laptop-fill', 'submenu': None},
         'تخمین قیمت خانهUS': {'action': do_estimation_us, 'item_icon': 'house-fill', 'submenu': None},
         'تخمین قیمت خانهIR': {'action': do_estimation_iran, 'item_icon': 'house-door-fill', 'submenu': None},
         'درباره ما': {'action': do_about_us, 'item_icon': 'info-circle-fill', 'submenu': None},
-    },  
+    },
     'menu_icon': 'bi bi-cash-coin',
     'default_index': 0,
     'with_view_panel': 'main',
     'orientation': 'horizontal',
     'styles': {
-        "container": {"margin": "0px !important", "padding": "0!important", "align-items": "stretch", "background-color": "#fafafa", "text-align": "right", "direction": "rtl",},
-        "icon": {"color": "black", "font-size": "20px"}, 
-        "nav-link": {"font-size": "20px", "text-align": "right", "direction": "rtl", "margin":"0px", "--hover-color": "#eee"},
-        "nav-link-selected": {"font-size": "20px", "font-weight": "normal", "color": "black" , "text-align": "right", "direction": "rtl",},
+        "container": {"margin": "0px !important", "padding": "0!important", "align-items": "stretch",
+                      "background-color": "#fafafa", "text-align": "right", "direction": "rtl", },
+        "icon": {"color": "black", "font-size": "20px"},
+        "nav-link": {"font-size": "20px", "text-align": "right", "direction": "rtl", "margin": "0px",
+                     "--hover-color": "#eee"},
+        "nav-link-selected": {"font-size": "20px", "font-weight": "normal", "color": "black", "text-align": "right",
+                              "direction": "rtl", },
     }
 }
+
 
 def show_menu(menu):
     def _get_options(menu):
@@ -792,9 +776,8 @@ def show_menu(menu):
         icons = [v['item_icon'] for _k, v in menu['items'].items()]
         return icons
 
-
     kwargs = {
-        'menu_title': None,  
+        'menu_title': None,
         'options': _get_options(menu),
         'icons': _get_icons(menu),
         'menu_icon': menu['menu_icon'],
@@ -810,7 +793,7 @@ def show_menu(menu):
         raise ValueError(f"Unknown view panel value: {with_view_panel}. Must be 'main'.")
 
     if menu['items'][menu_selection]['action']:
-        
         menu['items'][menu_selection]['action']()
+
 
 show_menu(menu)
