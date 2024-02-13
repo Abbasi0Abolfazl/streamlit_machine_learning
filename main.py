@@ -7,6 +7,8 @@ from sklearn.tree import DecisionTreeRegressor
 from streamlit_option_menu import option_menu
 from bidi.algorithm import get_display
 from sklearn import metrics
+from random import randint
+
 
 import matplotlib.pyplot as plt
 import streamlit as st
@@ -14,6 +16,7 @@ import arabic_reshaper
 import seaborn as sns
 import pandas as pd
 import numpy as np
+
 
 
 st.set_page_config(
@@ -66,17 +69,28 @@ st.markdown("""
         [data-testid="stNotificationContentInfo"]{direction: rtl;text-align: right;font-weight: 900;}
         
         [data-testid="InputInstructions"] { display: None; } 
-        
+        #MainMenu {visibility: hidden;}
+            footer {visibility: hidden;}
+            
+            
         div[data-testid="stSelectbox"]{
             width: 70% !important;
             margin: 0 auto !important;
         }
         
+        .mb-0{
+            position: absolute;
+            margin-top: 10px;
+            bottom: 0;
+            width: 100%;
+        }
+        
     </style>
 
 """, unsafe_allow_html=True)
-
     
+
+
 def do_home():
     st.title("به سایت `تخمینگر` خوش آمدید ")
 
@@ -90,8 +104,17 @@ def do_home():
     <style>
         body {
             text-align: right;
-            font-size: 30px;
+            font-size: 35px; /* افزایش اندازه متن */
             direction: rtl;
+        }
+        h1, h2 {
+            color: #333; /* تغییر رنگ عناوین */
+        }
+        p {
+            color: #666; /* تغییر رنگ متن پاراگراف */
+        }
+        ol {
+            color: #999; /* تغییر رنگ لیست */
         }
     </style>
 </head>
@@ -128,7 +151,11 @@ def do_home():
 
 </body>
 </html>
+
+
 """, unsafe_allow_html=True)
+    
+    
 
 def chart_to_base64(plt_chart):
     """
@@ -447,18 +474,24 @@ def do_laptop():
 
             st.write(user_df.head())
             
+    st.markdown("""
+    <footer>
+    تمامی حقوق مادی و معنوی این سایت متعلق به ابوالفضل عباسی است.
+    </footer>
+""", unsafe_allow_html=True)
+            
 
 
 def do_estimation_iran():
     initialize_session_state() 
     bad_data, clean_data = load_data('home_IR')
     
-
+    
     if st.button("تخمین قیمت "):
         st.session_state.prediction = True
         
     if st.session_state.prediction:
-        X = clean_data.drop(['rent','deposit', 'all_to_deposit', 'district'],axis=1)
+        X = clean_data.drop(['all_to_deposit', 'district'],axis=1)
         Y = clean_data.pop('all_to_deposit')
 
         
@@ -473,14 +506,10 @@ def do_estimation_iran():
         le=LabelEncoder()
         bad_data_clone['address']= le.fit_transform(bad_data_clone['region'])
         address_reverse_persian = list(np.unique(le.inverse_transform(bad_data_clone["address"])))
-        rgine = st.selectbox('طبقه ساختمانی که خانه در آن قرار دارد',
+        rgine = st.selectbox('محلی که خانه در آن وجوود دارد',
                              sorted(address_reverse_persian))
-        rgine = bad_data_clone['address'].unique()[address_reverse_persian.index(rgine)]  
-        
-        # TODO add district to predict
-        # area = st.selectbox('منطقه خانه ',
-        #                     sorted(clean_data['district'].unique()),
-        #                     format_func=format_func)                           
+        rgine = bad_data_clone['address'].unique()[address_reverse_persian.index(rgine)]   
+
                              
         floor = st.selectbox('طبقه ساختمانی که خانه در آن قرار دارد',
                              sorted(clean_data['floor'].unique()),
@@ -508,13 +537,6 @@ def do_estimation_iran():
         
         Warehouse = st.selectbox('وجود انبار در خانه', ['وجود دارد ', 'وجود ندارد'], )
         Warehouse = 1 if Warehouse == 'وجود دارد ' else 0
-        st.write(X_test)
-        y_pred_tree = regression_tree_houses.predict(X_test)
-        st.write(f'r2_score: {metrics.r2_score(y_test,y_pred_tree)}')
-        st.write(f'explained_variance_score: {metrics.explained_variance_score(y_test,y_pred_tree)}')
-        st.write(f'mean_squared_error: {metrics.mean_squared_error(y_test,y_pred_tree)}')
-        st.write(f'mean_absolute_error: {metrics.mean_absolute_error(y_test,y_pred_tree)}')
-        
         
         user_input = pd.DataFrame({
             'floor': [floor],
@@ -525,16 +547,15 @@ def do_estimation_iran():
             'parking': [parking],
             'Warehouse': [Warehouse],
             'address': [rgine],
+            'rent': [clean_data['rent'].median()],
+            'deposit': [clean_data['deposit'].median()],
         })
         
         
-        st.write(X.columns)
         user_input.columns = X.columns
 
-        user_input_scaled = regression_tree_houses.transform(user_input)
-
-        predicted_price = regression_tree_houses.predict(user_input_scaled)
-        st.write(f'قیمت تخمینی لپ تاپ: {predicted_price[0]:,.2f} یورو')
+        predicted_price = regression_tree_houses.predict(user_input)
+        st.write(f'قیمت تخمینی خانه: {predicted_price[0]*1000:,.2f} ')
         
         y_pred = regression_tree_houses.predict(X_test)
 
@@ -542,18 +563,12 @@ def do_estimation_iran():
         mse = mean_squared_error(y_test, y_pred)
         r2 = r2_score(y_test, y_pred)
 
-        # نمایش معیارهای دقت
-        st.write(f'خطای میانگین مطلق: {mae:,.2f} یورو')
-        st.write(f'خطای میانگین مربعات: {mse:,.2f} یورو')
-        st.write(f'{r2:.4f} : R-squared (R2) امتیاز ')
+        st.write(f'خطای میانگین مطلق: {mae:,.2f} . این معیار، میانگین اختلاف میان قیمت‌های پیش‌بینی شده و واقعی را نشان می‌دهد.')
+        st.write(f'خطای میانگین مربعات: {mse:,.2f} یورو. این معیار، میانگین مربعات اختلاف میان قیمت‌های پیش‌بینی شده و واقعی را نشان می‌دهد.')
+        st.write(f'{r2:.4f} : امتیاز. این معیار، میزان توضیح داده شده توسط مدل نسبت به داده‌ها را نشان می‌دهد.')
 
-        # محاسبه درصد دقت
         دقت_درصدی = regression_tree_houses.score(X_test, y_test) * 100
-        st.write(f'{دقت_درصدی:.2f}% : دقت مدل ')
-
-
-
-
+        st.write(f'{دقت_درصدی:.2f}% : دقت مدل. این معیار، درصد داده‌هایی که مدل به درستی پیش‌بینی کرده است نسبت به کل داده‌های تست را نشان می‌دهد.')
 
 
     if st.button('آپلود فایل'):
@@ -569,8 +584,6 @@ def do_estimation_iran():
                 st.error(f"این فایل قابل نمایش نیست به دلیل : {e}")
                 st.session_state.remove = False
                 
-
-
     if not st.session_state.remove:
         col1, col2 = st.columns(2)
         
@@ -644,6 +657,12 @@ def do_estimation_iran():
             st.markdown("<h3 style='color:blue;direction: rtl;'>داده بارگزاری شده توسط کاربر</h3>", unsafe_allow_html=True)
 
             st.write(user_df.head())
+            
+    st.markdown("""
+<footer>
+    تمامی حقوق مادی و معنوی این سایت متعلق به ابوالفضل عباسی است.
+</footer>
+""", unsafe_allow_html=True)
             
             
 
