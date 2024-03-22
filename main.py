@@ -5,7 +5,6 @@ from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.tree import DecisionTreeRegressor
 from streamlit_option_menu import option_menu
 from bidi.algorithm import get_display
-
 import matplotlib.pyplot as plt
 import streamlit as st
 import arabic_reshaper
@@ -207,14 +206,14 @@ def plot_correlation_heatmap(df):
 
 
 def show_other_chart(user_df):
-    show_chart_U = st.checkbox("نمایش نمودار")
-    if show_chart_U:
-        column_name_U = st.selectbox("", list(user_df.columns))
+    show_chart_user = st.checkbox("نمایش نمودار")
+    if show_chart_user:
+        column_name_user = st.selectbox("", list(user_df.columns))
 
         st.set_option('deprecation.showPyplotGlobalUse', False)
         fig_u, ax_u = plt.subplots(figsize=(9, 7))
 
-        sns.countplot(x=column_name_U, data=user_df)
+        sns.countplot(x=column_name_user, data=user_df)
 
         ax_u.tick_params(axis='x', rotation=90)
         st.pyplot(fig_u)
@@ -355,7 +354,7 @@ def do_laptop():
 
         predicted_price = forest.predict(user_input_scaled)
         eur_to_toman_rate = 59850
-        predicted_price_in_eur = predicted_price[0]  
+        predicted_price_in_eur = predicted_price[0]
         predicted_price_in_toman = predicted_price_in_eur * eur_to_toman_rate
         st.info(f'قیمت تخمینی لپ تاپ: {predicted_price_in_toman:,.2f} تومان')
 
@@ -430,9 +429,9 @@ def do_laptop():
                 st.pyplot(fig_clean)
 
     if st.session_state.remove:
-        col1_U, col2_U = st.columns(2)
+        col1_user, col2_user = st.columns(2)
 
-        with col2_U:
+        with col2_user:
 
             st.markdown("<div class='custom-button'>", unsafe_allow_html=True)
 
@@ -454,7 +453,7 @@ def do_laptop():
 
             st.markdown("</div>", unsafe_allow_html=True)
 
-        with col1_U:
+        with col1_user:
             st.markdown("<h3 style='color:blue;direction: rtl;'>داده بارگزاری شده توسط کاربر</h3>",
                         unsafe_allow_html=True)
 
@@ -469,13 +468,13 @@ def do_estimation_iran():
         st.session_state.prediction = True
 
     if st.session_state.prediction:
-        X = clean_data.drop(['all_to_deposit', 'district'], axis=1)
-        Y = clean_data.pop('all_to_deposit')
+        x = clean_data.drop(['all_to_deposit', 'district'], axis=1)
+        y = clean_data.pop('all_to_deposit')
 
         regression_tree_houses = DecisionTreeRegressor()
 
-        X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.4, random_state=0)
-        regression_tree_houses.fit(X_train, y_train)
+        x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.4, random_state=0)
+        regression_tree_houses.fit(x_train, y_train)
 
         def format_func(value):
             return int(value)
@@ -528,12 +527,12 @@ def do_estimation_iran():
             'deposit': [clean_data['deposit'].median()],
         })
 
-        user_input.columns = X.columns
+        user_input.columns = x.columns
 
         predicted_price = regression_tree_houses.predict(user_input)
         st.info(f'قیمت تخمینی خانه: {predicted_price[0] * 1000:,.2f} ')
 
-        y_pred = regression_tree_houses.predict(X_test)
+        y_pred = regression_tree_houses.predict(x_test)
 
         mae = mean_absolute_error(y_test, y_pred)
         mse = mean_squared_error(y_test, y_pred)
@@ -544,11 +543,10 @@ def do_estimation_iran():
         st.info(
             f'خطای میانگین مربعات: {mse:,.2f}')
         st.info(f'ضریب تعیین امتیاز : {r2:.4f}')
-        
 
-        percentage_accuracy = regression_tree_houses.score(X_test, y_test) * 100
+        percentage_accuracy = regression_tree_houses.score(x_test, y_test) * 100
         st.info(f'دقت مدل : {percentage_accuracy:.2f}% ')
-        
+
     if st.button('آپلود فایل'):
         st.session_state.clicked = True
 
@@ -637,7 +635,7 @@ def do_estimation_iran():
 
 
 def do_about_us():
-        st.markdown("""
+    st.markdown("""
 <!DOCTYPE html>
 <html lang="fa">
 <head>
@@ -721,15 +719,17 @@ menu = {
 }
 
 
+def _get_options(menu):
+    options = list(menu['items'].keys())
+    return options
+
+
+def _get_icons(menu):
+    icons = [v['item_icon'] for _k, v in menu['items'].items()]
+    return icons
+
+
 def show_menu(menu):
-    def _get_options(menu):
-        options = list(menu['items'].keys())
-        return options
-
-    def _get_icons(menu):
-        icons = [v['item_icon'] for _k, v in menu['items'].items()]
-        return icons
-
     kwargs = {
         'menu_title': None,
         'options': _get_options(menu),
