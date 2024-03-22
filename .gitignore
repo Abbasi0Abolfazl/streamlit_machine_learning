@@ -6,3 +6,5 @@
 .idea/streamlit_machine_learning.iml
 .idea/modules.xml
 .idea/inspectionProfiles/profiles_settings.xml
+
+venv
