@@ -5,6 +5,7 @@ from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.tree import DecisionTreeRegressor
 from streamlit_option_menu import option_menu
 from bidi.algorithm import get_display
+from platform import system
 import matplotlib.pyplot as plt
 import streamlit as st
 import arabic_reshaper
@@ -236,12 +237,14 @@ def show_other_chart(user_df):
 
 
 def load_data(type_data):
-    clean_data = pd.read_csv(f"CSV_data\\clean_data_{type_data}.csv", encoding='latin1')
+    path = "/" if system() == "Linux" else "\\"
+
+    clean_data = pd.read_csv(f"CSV_data{path}clean_data_{type_data}.csv", encoding='latin1')
 
     if type_data == 'home_IR':
-        bad_data = pd.read_csv(f"CSV_data\\bad_data_{type_data}.csv")
+        bad_data = pd.read_csv(f"CSV_data{path}bad_data_{type_data}.csv")
     else:
-        bad_data = pd.read_csv(f"CSV_data\\bad_data_{type_data}.csv", encoding='latin1')
+        bad_data = pd.read_csv(f"CSV_data{path}bad_data_{type_data}.csv", encoding='latin1')
 
     return bad_data, clean_data
 
